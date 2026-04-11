@@ -16,14 +16,14 @@ class OpenAILLM(LLM):
         super().__init__(api_key, api_base, default_model)
 
         self._client=AsyncOpenAI(
-            api_key,
+            api_key=api_key,
             base_url=api_base,
             max_retries=0
         );
 
     def _build_request(
             self,
-            messages: list[dict[str, Any]],
+            input: list[dict[str, Any]],
             model: str | None,
             max_tokens: int,
             temperature: float,
@@ -32,7 +32,7 @@ class OpenAILLM(LLM):
         request = {
             "model": self._ensure_model(model),
             "max_output_tokens": max(1, max_tokens),
-            "input": messages,
+            "input": input,
             "store": False,
             "stream": False,
             "temperature": temperature
@@ -42,13 +42,13 @@ class OpenAILLM(LLM):
 
     async def prompt(
         self,
-        messages: list[dict[str, Any]],
+        input: str | list[dict[str, Any]],
         model: str | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.7
     ):
-        request = self._build_request(messages, model, max_tokens, temperature)
+        request = self._build_request(input, model, max_tokens, temperature)
 
-        response = self._client.responses.create(self._build_request(**request))
+        response = await self._client.responses.create(**request)
 
         print(response)

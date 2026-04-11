@@ -29,7 +29,7 @@ class LLM(ABC):
     @abstractmethod
     async def prompt(
         self,
-        messages: list[dict[str, Any]],
+        input: str | list[dict[str, Any]],
         model: str | None = None,
         max_token: int = 4096,
         temperature: float = 0.7
