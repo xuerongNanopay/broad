@@ -42,5 +42,6 @@ class LLM(ABC):
 class LLMResponse:
     """Unify the responses from different LLM provider."""
     responseId: str | None
-    text: str | None
-    usage: dict[str, int] = field(default_factory=dict)
+    content: str | None
+    status: str | None
+    token_usage: dict[str, int] = field(default_factory=dict)
