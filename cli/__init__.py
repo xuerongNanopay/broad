@@ -14,11 +14,3 @@ app.add_typer(app_bots, name="robots")
 @app.command()
 def robots(name: str):
     print(f"robots")
-
-@app.callback()
-def main():
-    pass
-
-    
-# def app():
-#     print("CLI entry")

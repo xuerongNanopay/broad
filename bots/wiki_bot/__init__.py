@@ -1,19 +1,19 @@
-"""Github AI agent"""
+"""WIKI AI agent"""
 import typer
 
-github_bot = typer.Typer(
-    name="Github Agent",
+wiki_bot = typer.Typer(
+    name="WIKI Agent",
     # context_settings={"help_option_names": ["-h", "--help"]},
-    help="GitHub AI Agent",
+    help="WIKI AI Agent",
     # no_args_is_help=True,
 )
 
-@github_bot.callback(invoke_without_command=True)
-def _run_github_bot(
+@wiki_bot.callback(invoke_without_command=True)
+def _run_wiki_bot(
     short: bool = typer.Option(
         False,
         "--short",
         help="Short Running"
     )
 ):
-    print(f"This is github bot: {short}")
+    print(f"This is wiki bot: {short}")
