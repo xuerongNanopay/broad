@@ -1,5 +1,13 @@
+import logging
 from typing import Any
 from broad.llm.base import LLM
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from openai.types.responses import Response as OpenAIResponse
+
+from broad.llm.base import LLMResponse
 
 class OpenAILLM(LLM):
     """
@@ -51,4 +59,22 @@ class OpenAILLM(LLM):
 
         response = await self._client.responses.create(**request)
 
-        print(response)
+        print(response.json())
+
+def parse_response_output(response: OpenAIResponse) -> LLMResponse:
+    """Extract from OpenAIResponse to LLMPresponse"""
+
+    output = response.output or []
+    text_contents: list[str] = []
+
+    for item in output:
+        if not isinstance(item, dict):
+            raise ValueError("OpenAI unsupport item type")
+        
+        item_type = item.get("type")
+        if item_type == "message":
+            for content in item.get("content") or []:
+                if content.get("type") == "output_text":
+                    text_contents.append(content.get("text") or "")
+        else:
+            logging.warning("unhandle OpenAI response output: %s", item)

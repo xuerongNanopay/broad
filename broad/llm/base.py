@@ -1,5 +1,5 @@
 from abc import abstractmethod, ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
@@ -37,3 +37,10 @@ class LLM(ABC):
         """
         Send a prompt request.
         """
+
+@dataclass
+class LLMResponse:
+    """Unify the responses from different LLM provider."""
+    responseId: str | None
+    text: str | None
+    usage: dict[str, int] = field(default_factory=dict)
