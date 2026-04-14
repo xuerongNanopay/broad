@@ -14,7 +14,7 @@ class ArxivCategory(StrEnum):
 class ArvixQuery(TypedDict):
     category: ArxivCategory = None
     # keywords: List[str] = []
-    exact_titles: List[str] = []
+    exact_titles: str|List[str] = []
     title: str = ""
     # exact_titles: List[str] = []
 
@@ -66,7 +66,10 @@ def _format_query(query: ArvixQuery) -> str:
         l.append(" AND ".join(f'ti:"{k}"' for k in query["title"].split(",")))
     
     if query.get("exact_titles"):
-        l.append(" OR ".join(f'ti:"{k}"' for k in query["exact_titles"]))
+        if isinstance(query.get("exact_titles"), list):
+            l.append(" OR ".join(f'ti:"{k}"' for k in query["exact_titles"]))
+        else:
+            l.append(f'ti:"{query.get("exact_titles")}"')
         
     return " ".join(l)
 # def download_paper(path: Path):

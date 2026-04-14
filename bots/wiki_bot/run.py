@@ -17,7 +17,7 @@ def run():
     search_arvix_paper(
         {
             # "category": ArxivCategory.AI,
-            # "exact_titles": ["A-MEM: Agentic Memory for LLM Agents"]
-            "title": "Agentic, Memory, for LLM Agents"
+            # "exact_titles": "A-MEM: Agentic Memory for LLM Agents"
+            # "title": "Agentic, Memory, for LLM Agents"
         },
     )
