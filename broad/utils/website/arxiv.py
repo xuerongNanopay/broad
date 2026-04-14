@@ -55,12 +55,13 @@ def search_arvix_paper(
         print(result.published)
         print("---")
 
-def download_arxiv_pdf_paper(url: str, folder: str, filename: str):
+def download_arxiv_pdf_paper(url: str, folder: str, filename: str) -> str:
     paper_id = _parse_paper_id(url)
     client = arxiv.Client()
     search = arxiv.Search(id_list=[paper_id])
     paper = next(client.results(search))
     path = paper.download_pdf(dirpath=folder, filename=_format_paper_filename(filename))
+    return path
 
 def _format_paper_filename(origin: str) -> str:
     return f"{re.sub(r"\s+", "_", origin.strip())}.pdf"
