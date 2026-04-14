@@ -12,3 +12,6 @@ def init():
 def run():
     print("run the wiki")
     init()
+
+def download_paper(path: Path, id: str):
+    pass
