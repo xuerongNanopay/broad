@@ -1,6 +1,8 @@
 from typing import TypedDict, List
 import arxiv
 
+import re
+
 from enum import StrEnum, Enum
 
 class ArxivCategory(StrEnum):
@@ -53,6 +55,16 @@ def search_arvix_paper(
         print(result.published)
         print("---")
 
+def download_arxiv_pdf_paper(url: str, folder: str, filename: str):
+    paper_id = _parse_paper_id(url)
+    client = arxiv.Client()
+    search = arxiv.Search(id_list=[paper_id])
+    paper = next(client.results(search))
+    path = paper.download_pdf(dirpath=folder, filename=_format_paper_filename(filename))
+
+def _format_paper_filename(origin: str) -> str:
+    return f"{re.sub(r"\s+", "_", origin.strip())}.pdf"
+
 def _format_query(query: ArvixQuery) -> str:
     l = []
 
@@ -72,5 +84,8 @@ def _format_query(query: ArvixQuery) -> str:
             l.append(f'ti:"{query.get("exact_titles")}"')
         
     return " ".join(l)
+
+def _parse_paper_id(url: str) -> str:
+    return url.split("/")[-1] 
 # def download_paper(path: Path):
 #     pass
