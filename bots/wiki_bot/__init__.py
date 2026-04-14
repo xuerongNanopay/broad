@@ -16,4 +16,5 @@ def _run_wiki_bot(
         help="Short Running"
     )
 ):
-    print(f"This is wiki bot: {short}")
+    from .run import run
+    run()
