@@ -11,7 +11,12 @@ def init():
 
 def run():
     print("run the wiki")
-    init()
-
-def download_paper(path: Path, id: str):
-    pass
+    # init()
+    from broad.utils.website.arxiv import search_arvix_paper, ArxivCategory
+    # search_arvix_paper("ai")
+    search_arvix_paper(
+        {
+            "category": ArxivCategory.AI,
+            "keywords": ["GenIR"]
+        }
+    )
