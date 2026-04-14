@@ -15,4 +15,6 @@ async def main():
     )
 
 def run():
-    asyncio.run(main())
+    # asyncio.run(main())
+    from .github import tt
+    tt()
