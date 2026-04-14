@@ -1,7 +1,7 @@
 from typing import TypedDict, List
 import arxiv
 
-from enum import StrEnum
+from enum import StrEnum, Enum
 
 class ArxivCategory(StrEnum):
     AI = "cs.AI" # Artificial Intelligence)
@@ -12,17 +12,37 @@ class ArxivCategory(StrEnum):
     LG = "cs.LG" # Machine Learning
 
 class ArvixQuery(TypedDict):
-    category: ArxivCategory
-    keywords: List[str] = []
+    category: ArxivCategory = None
+    # keywords: List[str] = []
+    exact_titles: List[str] = []
+    title: str = ""
+    # exact_titles: List[str] = []
 
-def search_arvix_paper(query: str|ArvixQuery, *, max_results: int = 10):
+class ArxivOrder(Enum):
+    NEWEST = 1
+    MOST_RELEVANT = 2
+    LAST_UPDATE = 3
+
+_order_mapping = {
+    ArxivOrder.NEWEST: arxiv.SortCriterion.SubmittedDate,
+    ArxivOrder.MOST_RELEVANT: arxiv.SortCriterion.Relevance,
+    ArxivOrder.LAST_UPDATE: arxiv.SortCriterion.LastUpdatedDate
+}
+
+def search_arvix_paper(
+        query: str|ArvixQuery,
+        *, 
+        max_results: int = 10,
+        sort_by: ArxivOrder = ArxivOrder.MOST_RELEVANT
+    ):
     client = arxiv.Client()
     query = query if not isinstance(query, dict) else _format_query(query)
     print(query)
     search = arxiv.Search(
         query=query,
         max_results=max_results,
-        sort_by=arxiv.SortCriterion.SubmittedDate
+        sort_by=_order_mapping[sort_by],
+        sort_order = arxiv.SortOrder.Descending
     )
     results = client.results(search)
 
@@ -33,10 +53,21 @@ def search_arvix_paper(query: str|ArvixQuery, *, max_results: int = 10):
         print(result.published)
         print("---")
 
-def _format_query(query: ArxivCategory) -> str:
-    if not query["category"]:
-        return f"cat:{str(query["category"])}"
-    else:
-        return f"cat:{str(query["category"])} AND {" AND ".join(query['keywords'])}"
+def _format_query(query: ArvixQuery) -> str:
+    l = []
+
+    if query.get("category"):
+        l.append(f"cat:{str(query["category"])}")
+
+    # if query["keywords"]:
+    #     l.append(" AND ".join(query['keywords']))
+
+    if query.get("title"):
+        l.append(" AND ".join(f'ti:"{k}"' for k in query["title"].split(",")))
+    
+    if query.get("exact_titles"):
+        l.append(" OR ".join(f'ti:"{k}"' for k in query["exact_titles"]))
+        
+    return " ".join(l)
 # def download_paper(path: Path):
 #     pass
