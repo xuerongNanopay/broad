@@ -7,7 +7,7 @@ def fetch_repositories():
         "q": "stars:>1",
         "sort": "stars",
         "order": "desc",
-        "per_page": 10
+        "per_page": 1
     }
 
     with httpx.Client() as client:
@@ -16,6 +16,10 @@ def fetch_repositories():
         data = resp.json()
     
     print(data)
+    print(len(data["items"]))
+
+    for repo in data["items"]:
+        print(repo["full_name"], repo["stargazers_count"])
 
 def tt():
     fetch_repositories()
