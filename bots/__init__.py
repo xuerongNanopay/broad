@@ -12,3 +12,7 @@ app_bots.add_typer(github_bot, name="github_bot")
 
 from bots.wiki_bot import wiki_bot
 app_bots.add_typer(wiki_bot, name="wiki_bot")
+
+from broad.utils.path import develop_journal_home
+
+ROBOT_JOURNAL_HOME = develop_journal_home() / "robots"
