@@ -14,5 +14,5 @@ async def main():
         input="Hello, can you return a greeting"
     )
 
-if __name__ == "__main__":
+def run():
     asyncio.run(main())

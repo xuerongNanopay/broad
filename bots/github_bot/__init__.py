@@ -17,3 +17,7 @@ def _run_github_bot(
     )
 ):
     print(f"This is github bot: {short}")
+    from .run import run
+    run()
+
+
