@@ -11,4 +11,4 @@ wheels/
 .env
 
 # local agnent data
-.agents_knowledge/
+.broad/
