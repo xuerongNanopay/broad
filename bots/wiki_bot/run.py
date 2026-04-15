@@ -28,7 +28,8 @@ def run():
     path = download_arxiv_pdf_paper("http://arxiv.org/abs/2502.12110v11", WIKI_RAW_FOLDER, "A-MEM: Agentic Memory for LLM Agents")
 
     raw_pdf = extract_pdf_text(path)
-    print(raw_pdf)
+    print(Path(path).name)
+    # print(raw_pdf)
     print(len(raw_pdf))
 
 
