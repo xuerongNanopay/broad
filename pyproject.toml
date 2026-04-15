@@ -8,6 +8,7 @@ dependencies = [
     "arxiv>=3.0.0",
     "dotenv>=0.9.9",
     "httpx>=0.28.1",
+    "ollama>=0.6.1",
     "openai>=2.31.0",
     "pypdf>=6.10.1",
     "typer>=0.24.1",
