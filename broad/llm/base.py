@@ -27,7 +27,7 @@ class LLM(ABC):
         raise ValueError("miss default_model or model")
 
     @abstractmethod
-    async def prompt(
+    def prompt(
         self,
         input: str | list[dict[str, Any]],
         model: str | None = None,

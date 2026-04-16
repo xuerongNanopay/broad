@@ -14,23 +14,32 @@ def init():
     ensure_folder(WIKI_PAPER_FOLDER)
 
 def run():
-    print("run the wiki")
-    # init()
-    from broad.utils.website.arxiv import search_arvix_paper, ArxivCategory, download_arxiv_pdf_paper
-    # search_arvix_paper("ai")
-    # search_arvix_paper(
-    #     {
-    #         # "category": ArxivCategory.AI,
-    #         "exact_titles": "A-MEM: Agentic Memory for LLM Agents"
-    #         # "title": "Agentic, Memory, for LLM Agents"
-    #     },
-    # )
-    path = download_arxiv_pdf_paper("http://arxiv.org/abs/2502.12110v11", WIKI_RAW_FOLDER, "A-MEM: Agentic Memory for LLM Agents")
+    from broad.llm.ollama import OllamaLocal
+    llm = OllamaLocal(default_model="gemma4:26b")
 
-    raw_pdf = extract_pdf_text(path)
-    print(Path(path).name)
-    # print(raw_pdf)
-    print(len(raw_pdf))
+    llm.prompt([
+        {
+            'role': 'user',
+            'content': 'Why is the sky blue?',
+        }
+    ])
+    # print("run the wiki")
+    # # init()
+    # from broad.utils.website.arxiv import search_arvix_paper, ArxivCategory, download_arxiv_pdf_paper
+    # # search_arvix_paper("ai")
+    # # search_arvix_paper(
+    # #     {
+    # #         # "category": ArxivCategory.AI,
+    # #         "exact_titles": "A-MEM: Agentic Memory for LLM Agents"
+    # #         # "title": "Agentic, Memory, for LLM Agents"
+    # #     },
+    # # )
+    # path = download_arxiv_pdf_paper("http://arxiv.org/abs/2502.12110v11", WIKI_RAW_FOLDER, "A-MEM: Agentic Memory for LLM Agents")
+
+    # raw_pdf = extract_pdf_text(path)
+    # print(Path(path).name)
+    # # print(raw_pdf)
+    # print(len(raw_pdf))
 
 
 def extract_pdf_text(path: str) -> str:

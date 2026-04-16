@@ -22,10 +22,10 @@ class OpenAI(LLM):
         api_base: str | None = None,
         default_model: str = "gpt-5.4-nano",
     ):
-        from openai import AsyncOpenAI
+        from openai import OpenAI
         super().__init__(api_key, api_base, default_model)
 
-        self._client=AsyncOpenAI(
+        self._client=OpenAI(
             api_key=api_key,
             base_url=api_base,
             max_retries=0
@@ -50,7 +50,7 @@ class OpenAI(LLM):
 
         return request
 
-    async def prompt(
+    def prompt(
         self,
         input: str | list[dict[str, Any]],
         model: str | None = None,
@@ -59,7 +59,7 @@ class OpenAI(LLM):
     ):
         request = self._build_request(input, model, max_tokens, temperature)
 
-        response = await self._client.responses.create(**request)
+        response = self._client.responses.create(**request)
 
         print(parse_response_output(response))
 
