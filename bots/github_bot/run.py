@@ -6,10 +6,10 @@ import asyncio
 from dotenv import load_dotenv
 load_dotenv()
 
-from broad.llm import OpenAILLM
+from broad.llm import OpenAI
 
 async def main():
-    llm = OpenAILLM()
+    llm = OpenAI()
     await llm.prompt(
         input="Hello, can you return a greeting"
     )

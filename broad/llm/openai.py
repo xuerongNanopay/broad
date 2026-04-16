@@ -11,7 +11,7 @@ from openai.types.responses import Response as OpenAIResponse
 
 from broad.llm.base import LLMResponse
 
-class OpenAILLM(LLM):
+class OpenAI(LLM):
     """
     LLM for Open AI
     """
