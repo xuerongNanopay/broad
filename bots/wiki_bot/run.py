@@ -4,25 +4,28 @@ from broad.utils.path import ensure_folder
 
 from .. import ROBOT_JOURNAL_HOME
 
+from langchain_core.tools import tool
+
 WIKI_JOURNAL_HOME = ROBOT_JOURNAL_HOME / "wiki_bot"
 WIKI_RAW_FOLDER = WIKI_JOURNAL_HOME / "raw"
 WIKI_PAPER_FOLDER = WIKI_RAW_FOLDER / "paper"
 
+OLLAMA_MODEL = "gemma4:26b"
 
 def init():
     ensure_folder(WIKI_RAW_FOLDER)
     ensure_folder(WIKI_PAPER_FOLDER)
 
 def run():
-    from broad.llm.ollama import OllamaLocal
-    llm = OllamaLocal(default_model="gemma4:26b")
+    # from broad.llm.ollama import OllamaLocal
+    # llm = OllamaLocal(default_model="gemma4:26b")
 
-    llm.prompt([
-        {
-            'role': 'user',
-            'content': 'Why is the sky blue?',
-        }
-    ])
+    # llm.prompt([
+    #     {
+    #         'role': 'user',
+    #         'content': 'Why is the sky blue?',
+    #     }
+    # ])
     # print("run the wiki")
     # # init()
     # from broad.utils.website.arxiv import search_arvix_paper, ArxivCategory, download_arxiv_pdf_paper
@@ -40,6 +43,15 @@ def run():
     # print(Path(path).name)
     # # print(raw_pdf)
     # print(len(raw_pdf))
+    _run_langchain()
+
+def _run_langchain():
+    from langchain_ollama import ChatOllama
+
+    llm = ChatOllama(model=OLLAMA_MODEL)
+    llm = llm.bind_tools([fetch_papers])
+    response = llm.invoke("Check how many paper I have")
+    print(response)
 
 
 def extract_pdf_text(path: str) -> str:
@@ -54,4 +66,9 @@ def extract_pdf_text(path: str) -> str:
         return "\n".join(pages)
     except Exception:
         return ""
+
+@tool
+def fetch_papers() -> str:
+    """Get papers under raw folder"""
+    return "nothing"
 
