@@ -1,4 +1,3 @@
-"""PAPER SUMMARY AI agent"""
 import typer
 
 paper_summary_bot = typer.Typer(
@@ -19,4 +18,5 @@ def _run_paper_summary_bot(
     _run()
 
 def _run():
-    print("Summary mamer")
+    from .run_bot import run
+    run()

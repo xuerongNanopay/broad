@@ -1,5 +1,5 @@
 from pathlib import Path
-_MARKDOWNS_HOME = Path(__file__).resolve().parent / "mds"
+_MARKDOWNS_HOME = Path(__file__).resolve().parent.parent / "mds"
 
 from jinja2 import Environment, FileSystemLoader
 _env = Environment(
