@@ -1,3 +1,5 @@
+from typing import List
+
 from pathlib import Path
 
 from broad.utils.path import ensure_folder
@@ -68,7 +70,11 @@ def extract_pdf_text(path: str) -> str:
         return ""
 
 @tool
-def fetch_papers() -> str:
+def fetch_papers(paper_folder: Path, extensions: List[str] = [".pdf"]) -> str:
     """Get papers under raw folder"""
     return "nothing"
+
+def store_markdown(folder: Path, filename: str, content: str):
+    pass
+# find from folder and summary to markdown.
 

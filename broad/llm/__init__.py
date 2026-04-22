@@ -5,3 +5,7 @@ __all__ = [
     "LLM",
     "OpenAI",
 ]
+
+MSG_SYSTEM = "system"
+MSG_ASSISTANT = "assistant"
+MSG_USER = "user"
