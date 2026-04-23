@@ -54,14 +54,21 @@ def _init_model(model:str):
         return _init_ollama_model(model)
     
 def _search_paper(paper: str):
-    from utils.www.arxiv import search_arvix_paper, ArvixQuery
+    from utils.www.arxiv import search_arvix_paper, ArvixQuery, ArxivCategory, ArxivOrder
     temp = "A-MEM: Agentic Memory for LLM Agents"
 
-    query: ArvixQuery = {
-        "ids": [paper]
-    }
+    query: ArvixQuery = {}
+    order = ArxivOrder.MOST_RELEVANT
+    if is_arxiv_id(paper):
+        query["ids"] = [paper]
+    elif paper in ArxivCategory._value2member_map_:
+        query["category"] = ArxivCategory(paper)
+        order = ArxivOrder.NEWEST
+    else:
+        query["exact_titles"] = [paper]
 
-    search_arvix_paper(query)
+
+    search_arvix_paper(query, sort_by=order)
 
 def is_arxiv_id(s: str) -> bool:
     import re

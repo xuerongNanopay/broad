@@ -22,7 +22,18 @@ def _run_research_paper_bot(
         "--paper",
         "-p",
         help="""
-        paper id or paper name
+            Accept three types of string: \n
+                1. Arvix Id(eg: 2604.20117|2604.20117v1) \n
+                    - eg: -p 2604.20117 \n
+                2. Paper Title(eg: "To Know is to Construct: Schema-Constrained Generation for Agent Memory") \n
+                    - eg: -p "To Know is to Construct: Schema-Constrained Generation for Agent Memory" \n
+                3. Categories \n
+                    - "cs.AI": Artificial Intelligence) \n
+                    - "cs.DB": Databases \n
+                    - "cs.DC": Distributed, Parallel, and Cluster Computing \n
+                    - "cs.NE": Neural and Evolutionary Computing \n
+                    - "cs.CL": Computation and Language(LLM) 
+                    - "cs.LG": Machine Learning \n
         """
     )
 ):

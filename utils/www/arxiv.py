@@ -40,13 +40,14 @@ def search_arvix_paper(
     ):
     client = arxiv.Client()
     query = arvix_query if not isinstance(arvix_query, dict) else _format_query(arvix_query)
-    ids = arvix_query["ids"] if isinstance(arvix_query, dict) else None
+    ids = arvix_query["ids"] if isinstance(arvix_query, dict) and "ids" in arvix_query else None
+    sort_by = _order_mapping[sort_by];
 
     search = arxiv.Search(
         query=query,
         id_list=ids,
         max_results=max_results,
-        sort_by=_order_mapping[sort_by],
+        sort_by=sort_by,
         sort_order = arxiv.SortOrder.Descending
     )
     results = client.results(search)
