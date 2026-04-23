@@ -8,14 +8,17 @@ def _init_dependencies():
     ensure_folder(_RAW_PAPER_HOME)
     ensure_folder(_SUMMARY_PAPER_HOME)
 
+from datetime import date
+
 def run(
     model: str,
     paper: str,
-    limit: int
+    limit: int,
+    date_range: tuple[date, date] | None = None
 ):
     _init_dependencies()
 
-    _search_paper(paper, limit)
+    _search_paper(paper, limit, date_range)
     # from langchain_core.messages import SystemMessage, HumanMessage
     # from utils.markdown import render_markdown
     # from utils.pdf import read_pdf
@@ -54,7 +57,7 @@ def _init_model(model:str):
     else:
         return _init_ollama_model(model)
     
-def _search_paper(paper: str, limit: int):
+def _search_paper(paper: str, limit: int, date_range):
     from utils.www.arxiv import search_arvix_paper, ArvixQuery, ArxivCategory, ArxivOrder
     temp = "A-MEM: Agentic Memory for LLM Agents"
 
@@ -68,7 +71,8 @@ def _search_paper(paper: str, limit: int):
     else:
         query["exact_titles"] = [paper]
 
-
+    query["date_ranges"] = date_range
+    
     rets = search_arvix_paper(query, sort_by=order, max_results=limit)
     for r in rets:
         print(r.to_json(pretty=True))

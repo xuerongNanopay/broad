@@ -1,4 +1,9 @@
 import typer
+from datetime import datetime, date
+
+
+def _parse_date(value: str) -> date:
+    return datetime.strptime(value, "%Y-%m-%d").date()
 
 research_paper_bot = typer.Typer(
     name="PAPER SUMMARY Agent",
@@ -41,10 +46,19 @@ def _run_research_paper_bot(
         "--limit",
         "-l",
         help="Maximum paper to be return"
+    ),
+    range: str = typer.Option(
+        "",
+        "--range",
+        "-r",
+        help="eg: 19910101-19910102"
     )
 ):
+    
+    beg, end = range.split(":", 1)
+
     from .run_bot import run
-    run(model.strip(), paper.strip(), max(1, limit))
+    run(model.strip(), paper.strip(), max(1, limit), (_parse_date(beg), _parse_date(end)))
 
 def _run():
     from .run_bot import run

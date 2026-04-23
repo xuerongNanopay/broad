@@ -4,7 +4,7 @@ from enum import StrEnum, Enum
 import re
 import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, date
 
 import arxiv
 
@@ -22,6 +22,7 @@ class ArvixQuery(TypedDict):
     exact_titles: str|List[str] = []
     title: str|None = None
     ids: List[str]|None = None
+    date_ranges: tuple[date, date] | None = None
     # exact_titles: List[str] = []
 
 @dataclass
@@ -68,6 +69,7 @@ def search_arvix_paper(
     ids = arvix_query["ids"] if isinstance(arvix_query, dict) and "ids" in arvix_query else None
     sort_by = _order_mapping[sort_by];
 
+    print(query)
     search = arxiv.Search(
         query=query,
         id_list=ids,
@@ -108,7 +110,13 @@ def _format_query(query: ArvixQuery) -> str:
         else:
             l.append(f'ti:"{query.get("exact_titles")}"')
         
-    return " ".join(l)
+    ret = " ".join(l)
+ 
+    if query.get("date_ranges"):
+        begin, end = query.get("date_ranges")
+        ret += f" AND submittedDate:[{begin.strftime("%Y%m%d")}0000 TO {end.strftime("%Y%m%d")}0000]"
+
+    return ret
 
 def _parse_paper_id(url: str) -> str:
     return url.split("/")[-1] 
