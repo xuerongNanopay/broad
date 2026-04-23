@@ -14,6 +14,7 @@ def run(
 ):
     _init_dependencies()
 
+    print(paper)
     from langchain_core.messages import SystemMessage, HumanMessage
     from utils.markdown import render_markdown
     from utils.pdf import read_pdf
