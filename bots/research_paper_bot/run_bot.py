@@ -3,8 +3,17 @@ _JOURNAL_HOME = ROBOT_JOURNAL_HOME / "research_paper_bot"
 _RAW_PAPER_HOME = _JOURNAL_HOME / "paper"
 _SUMMARY_PAPER_HOME = _JOURNAL_HOME / "summary"
 
-def run():
-    from langchain_ollama import ChatOllama
+def _init_dependencies():
+    from utils.path import ensure_folder
+    ensure_folder(_RAW_PAPER_HOME)
+    ensure_folder(_SUMMARY_PAPER_HOME)
+
+def run(
+    model: str,
+    paper: str
+):
+    _init_dependencies()
+
     from langchain_core.messages import SystemMessage, HumanMessage
     from utils.markdown import render_markdown
     from utils.pdf import read_pdf
@@ -13,9 +22,6 @@ def run():
     paper_path = "partially_materialized_view.pdf"
     paper_name, _ = os.path.splitext(paper_path)
 
-
-    model = "gemma4:26b"
-    # model = "gpt-5.4-nano"
     llm = _init_model(model)
 
     messages = [

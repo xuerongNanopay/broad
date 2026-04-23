@@ -8,9 +8,9 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-from bots import app_bots
-app.add_typer(app_bots, name="robots")
+from bots import bots
+app.add_typer(bots, name="bots")
 
 @app.command()
-def robots(name: str):
-    print(f"robots")
+def bots(name: str):
+    print(f"bots")
