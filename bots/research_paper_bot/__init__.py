@@ -2,7 +2,7 @@ import typer
 
 research_paper_bot = typer.Typer(
     name="PAPER SUMMARY Agent",
-    # context_settings={"help_option_names": ["-h", "--help"]},
+    context_settings={"help_option_names": ["-h", "--help"]},
     help="""
     Search and download paper from arxiv, and summarize the paper.
     """,
