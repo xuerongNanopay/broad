@@ -35,10 +35,16 @@ def _run_research_paper_bot(
                     - "cs.CL": Computation and Language(LLM) 
                     - "cs.LG": Machine Learning \n
         """
+    ),
+    limit: int = typer.Option(
+        10,
+        "--limit",
+        "-l",
+        help="Maximum paper to be return"
     )
 ):
     from .run_bot import run
-    run(model.strip(), paper.strip())
+    run(model.strip(), paper.strip(), max(1, limit))
 
 def _run():
     from .run_bot import run

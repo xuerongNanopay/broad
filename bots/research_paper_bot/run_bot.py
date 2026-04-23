@@ -10,11 +10,12 @@ def _init_dependencies():
 
 def run(
     model: str,
-    paper: str
+    paper: str,
+    limit: int
 ):
     _init_dependencies()
 
-    _search_paper(paper)
+    _search_paper(paper, limit)
     # from langchain_core.messages import SystemMessage, HumanMessage
     # from utils.markdown import render_markdown
     # from utils.pdf import read_pdf
@@ -53,7 +54,7 @@ def _init_model(model:str):
     else:
         return _init_ollama_model(model)
     
-def _search_paper(paper: str):
+def _search_paper(paper: str, limit: int):
     from utils.www.arxiv import search_arvix_paper, ArvixQuery, ArxivCategory, ArxivOrder
     temp = "A-MEM: Agentic Memory for LLM Agents"
 
@@ -68,7 +69,7 @@ def _search_paper(paper: str):
         query["exact_titles"] = [paper]
 
 
-    search_arvix_paper(query, sort_by=order)
+    search_arvix_paper(query, sort_by=order, max_results=limit)
 
 def is_arxiv_id(s: str) -> bool:
     import re
