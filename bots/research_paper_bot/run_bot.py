@@ -69,7 +69,9 @@ def _search_paper(paper: str, limit: int):
         query["exact_titles"] = [paper]
 
 
-    search_arvix_paper(query, sort_by=order, max_results=limit)
+    rets = search_arvix_paper(query, sort_by=order, max_results=limit)
+    for r in rets:
+        print(r.to_json(pretty=True))
 
 def is_arxiv_id(s: str) -> bool:
     import re

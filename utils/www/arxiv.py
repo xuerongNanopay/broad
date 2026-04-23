@@ -1,9 +1,12 @@
 from typing import TypedDict, List
-import arxiv
+from enum import StrEnum, Enum
 
 import re
+import json
+from dataclasses import dataclass
+from datetime import datetime
 
-from enum import StrEnum, Enum
+import arxiv
 
 class ArxivCategory(StrEnum):
     AI = "cs.AI" # Artificial Intelligence)
@@ -21,6 +24,27 @@ class ArvixQuery(TypedDict):
     ids: List[str]|None = None
     # exact_titles: List[str] = []
 
+@dataclass
+class ArvixResult:
+    url: str
+    updated: datetime
+    published: datetime
+    title: str
+    summary: str | None
+
+    @classmethod
+    def from_arvix_result(cls, ret: arxiv.Result):
+        return ArvixResult(
+            url=ret.entry_id,
+            updated=ret.updated,
+            published=ret.published,
+            title=ret.title,
+            summary=ret.summary,
+        )
+
+    def to_json(self, *, pretty=False):
+        return json.dumps(self.__dict__, default=str, indent=2 if pretty else None)
+
 class ArxivOrder(Enum):
     NEWEST = 1
     MOST_RELEVANT = 2
@@ -37,7 +61,8 @@ def search_arvix_paper(
         *, 
         max_results: int = 10,
         sort_by: ArxivOrder = ArxivOrder.MOST_RELEVANT
-    ):
+    ) -> List[ArvixResult]:
+
     client = arxiv.Client()
     query = arvix_query if not isinstance(arvix_query, dict) else _format_query(arvix_query)
     ids = arvix_query["ids"] if isinstance(arvix_query, dict) and "ids" in arvix_query else None
@@ -52,12 +77,7 @@ def search_arvix_paper(
     )
     results = client.results(search)
 
-    for result in results:
-        print(result.title)
-        print(result.entry_id)
-        print(result.summary)
-        print(result.published)
-        print("---")
+    return [ArvixResult.from_arvix_result(r) for r in results]
 
 def download_arxiv_pdf_paper(url: str, folder: str, filename: str) -> str:
     paper_id = _parse_paper_id(url)
