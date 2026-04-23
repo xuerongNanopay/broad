@@ -47,7 +47,7 @@ def _run_research_paper_bot(
         "-l",
         help="Maximum paper to be return"
     ),
-    range: str = typer.Option(
+    date_range: str = typer.Option(
         "",
         "--range",
         "-r",
@@ -55,10 +55,12 @@ def _run_research_paper_bot(
     )
 ):
     
-    beg, end = range.split(":", 1)
+    if date_range:
+        beg, end = range.split(":", 1)
+        date_range = (_parse_date(beg), _parse_date(end))
 
     from .run_bot import run
-    run(model.strip(), paper.strip(), max(1, limit), (_parse_date(beg), _parse_date(end)))
+    run(model.strip(), paper.strip(), max(1, limit), date_range)
 
 def _run():
     from .run_bot import run

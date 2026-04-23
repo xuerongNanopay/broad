@@ -65,6 +65,8 @@ def _search_paper(paper: str, limit: int, date_range):
     order = ArxivOrder.MOST_RELEVANT
     if is_arxiv_id(paper):
         query["ids"] = [paper]
+    elif paper.startswith("title:"):
+        query["title"] = paper.lstrip("title:")
     elif paper in ArxivCategory._value2member_map_:
         query["category"] = ArxivCategory(paper)
         order = ArxivOrder.NEWEST
