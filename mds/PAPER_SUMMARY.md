@@ -35,3 +35,11 @@ Follow these sections strictly:
     - Summary should include the problem that the paper try to solve
     - Heading with `Abstract` in H2
     - Bold the terminology that introduced in the paper
+
+5. Read related or previous work section, and summary all works.
+    - use key value style
+    - key is the paper name, you can find name in references session
+    - value is one-line summary of the work
+    - bold key
+    - place into unsort list(-)
+    - Heading with `Related Works` in H2
