@@ -17,7 +17,8 @@ class ArvixQuery(TypedDict):
     category: ArxivCategory = None
     # keywords: List[str] = []
     exact_titles: str|List[str] = []
-    title: str = ""
+    title: str|None = None
+    ids: List[str]|None = None
     # exact_titles: List[str] = []
 
 class ArxivOrder(Enum):
@@ -32,16 +33,18 @@ _order_mapping = {
 }
 
 def search_arvix_paper(
-        query: str|ArvixQuery,
+        arvix_query: str|ArvixQuery,
         *, 
         max_results: int = 10,
         sort_by: ArxivOrder = ArxivOrder.MOST_RELEVANT
     ):
     client = arxiv.Client()
-    query = query if not isinstance(query, dict) else _format_query(query)
-    print(query)
+    query = arvix_query if not isinstance(arvix_query, dict) else _format_query(arvix_query)
+    ids = arvix_query["ids"] if isinstance(arvix_query, dict) else None
+
     search = arxiv.Search(
         query=query,
+        id_list=ids,
         max_results=max_results,
         sort_by=_order_mapping[sort_by],
         sort_order = arxiv.SortOrder.Descending

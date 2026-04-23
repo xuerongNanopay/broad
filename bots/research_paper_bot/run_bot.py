@@ -14,27 +14,27 @@ def run(
 ):
     _init_dependencies()
 
-    print(paper)
-    from langchain_core.messages import SystemMessage, HumanMessage
-    from utils.markdown import render_markdown
-    from utils.pdf import read_pdf
-    import os
+    _search_paper(paper)
+    # from langchain_core.messages import SystemMessage, HumanMessage
+    # from utils.markdown import render_markdown
+    # from utils.pdf import read_pdf
+    # import os
 
-    paper_path = "partially_materialized_view.pdf"
-    paper_name, _ = os.path.splitext(paper_path)
+    # paper_path = "partially_materialized_view.pdf"
+    # paper_name, _ = os.path.splitext(paper_path)
 
-    llm = _init_model(model)
+    # llm = _init_model(model)
 
-    messages = [
-        SystemMessage(content=render_markdown("PAPER_SUMMARY.md")),
-        HumanMessage(content=read_pdf(str(_RAW_PAPER_HOME / paper_path)))
-    ]
+    # messages = [
+    #     SystemMessage(content=render_markdown("PAPER_SUMMARY.md")),
+    #     HumanMessage(content=read_pdf(str(_RAW_PAPER_HOME / paper_path)))
+    # ]
 
-    ret = llm.invoke(messages)
-    with open(_SUMMARY_PAPER_HOME / f"{paper_name}_{model}.md", "w") as f:
-        f.write(ret.content)
+    # ret = llm.invoke(messages)
+    # with open(_SUMMARY_PAPER_HOME / f"{paper_name}_{model}.md", "w") as f:
+    #     f.write(ret.content)
     
-    print(ret.usage_metadata)
+    # print(ret.usage_metadata)
     
 
 def _init_openai_model(model: str):
@@ -52,3 +52,18 @@ def _init_model(model:str):
         return _init_openai_model(model)
     else:
         return _init_ollama_model(model)
+    
+def _search_paper(paper: str):
+    from utils.www.arxiv import search_arvix_paper, ArvixQuery
+    temp = "A-MEM: Agentic Memory for LLM Agents"
+
+    query: ArvixQuery = {
+        "ids": [paper]
+    }
+
+    search_arvix_paper(query)
+
+def is_arxiv_id(s: str) -> bool:
+    import re
+    pattern = r'^(?:arXiv:)?(?:(?:\d{4}\.\d{4,5})|(?:[a-z-]+(?:\.[A-Z]{2})?/\d{7}))(?:v\d+)?$'
+    return re.fullmatch(pattern, s) is not None

@@ -21,11 +21,13 @@ def _run_research_paper_bot(
         ...,
         "--paper",
         "-p",
-        help="paper id or paper name"
+        help="""
+        paper id or paper name
+        """
     )
 ):
     from .run_bot import run
-    run(model, paper)
+    run(model.strip(), paper.strip())
 
 def _run():
     from .run_bot import run
