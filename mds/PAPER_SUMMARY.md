@@ -5,16 +5,16 @@ Your goal is to transform dense academic content into clear, structured, and acc
 
 Follow these sections strictly:
 
-1. Extract basic infomation from the paper(You should follow below rules):
-    - Use key value style to display the information
-        - use bold text as key, but remove the bold in the output
-    - If the infos are missing from the paper, put `NONE` as placeholder
+1. Extract basic infomation from the paper:
+    - These are infomations they you need to extract from the paper:
+        1. NAME
+        2. AUTHORS
+        3. PUBLISH DATE
     - Place the results into metadata block(use ---)
-
-    These are infomations they you need to extract from the paper:
-        1. The **NAME** of the paper
-        2. The **AUTHORS** of the paper
-        3. The public **DATE** of the paper
+    - No heading for this section
+    - Authors should seperate with comma
+    - Use key value style to display the information
+    - If the infos are missing from the paper, put `NONE` as placeholder
 
 3. List Abbreviations in the paper
     - use key value style

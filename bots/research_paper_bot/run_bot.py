@@ -14,8 +14,9 @@ def run():
     paper_name, _ = os.path.splitext(paper_path)
 
 
-    ollama_model = "gemma4:26b"
-    llm = ChatOllama(model=ollama_model, temperature=0)
+    model = "gemma4:26b"
+    # model = "gpt-5.4-nano"
+    llm = _init_model(model)
 
     messages = [
         SystemMessage(content=render_markdown("PAPER_SUMMARY.md")),
@@ -23,5 +24,24 @@ def run():
     ]
 
     ret = llm.invoke(messages)
-    with open(_SUMMARY_PAPER_HOME / f"{paper_name}.md", "w") as f:
+    with open(_SUMMARY_PAPER_HOME / f"{paper_name}_{model}.md", "w") as f:
         f.write(ret.content)
+    
+    print(ret.usage_metadata)
+    
+
+def _init_openai_model(model: str):
+    from langchain_openai import ChatOpenAI
+    from utils.env import load_env
+    load_env()
+    return ChatOpenAI(model=model)
+
+def _init_ollama_model(model: str):
+    from langchain_ollama import ChatOllama
+    return ChatOllama(model=model)
+
+def _init_model(model:str):
+    if model.startswith("gpt"):
+        return _init_openai_model(model)
+    else:
+        return _init_ollama_model(model)
