@@ -53,11 +53,11 @@ def _run_research_paper_bot(
         "-r",
         help="eg: 19910101-19910102"
     ),
-    is_download: bool = typer.Option(
+    is_analyze: bool = typer.Option(
         False,
-        "--download"
-        "-d",
-        help = "download the paper"
+        "--analyze",
+        "-a",
+        help = "analyze the paper"
     ),
     # is_analyze: bool = typer.Option(
 
@@ -71,7 +71,7 @@ def _run_research_paper_bot(
         date_range = None
 
     from .run_bot import run
-    run(model.strip(), paper.strip(), max(1, limit), date_range)
+    run(model.strip(), paper.strip(), max(1, limit), date_range, is_analyze)
 
 def _run():
     from .run_bot import run

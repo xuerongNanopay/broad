@@ -14,33 +14,25 @@ def run(
     model: str,
     paper: str,
     limit: int,
-    date_range: tuple[date, date] | None = None
+    date_range: tuple[date, date] | None,
+    is_analyze: bool,
 ):
     _init_dependencies()
 
     papers = _search_paper(paper, limit, date_range)
     for r in papers:
         print(r.to_json(pretty=True))
-    # from langchain_core.messages import SystemMessage, HumanMessage
-    # from utils.markdown import render_markdown
-    # from utils.pdf import read_pdf
-    # import os
-
-    # paper_path = "partially_materialized_view.pdf"
-    # paper_name, _ = os.path.splitext(paper_path)
-
-    # llm = _init_model(model)
-
-    # messages = [
-    #     SystemMessage(content=render_markdown("PAPER_SUMMARY.md")),
-    #     HumanMessage(content=read_pdf(str(_RAW_PAPER_HOME / paper_path)))
-    # ]
-
-    # ret = llm.invoke(messages)
-    # with open(_SUMMARY_PAPER_HOME / f"{paper_name}_{model}.md", "w") as f:
-    #     f.write(ret.content)
     
-    # print(ret.usage_metadata)
+    # TODO: paper filter(duplicate remove, unneed paper)
+    if not is_analyze:
+        return
+
+    if len(papers) != 1:
+        print("Can't download multiple paper")
+
+    paper = papers[0]
+    paper_path = paper.save_pdf_to(str(_RAW_PAPER_HOME), f"{_format_paper_title(paper.title)}.pdf");
+    _analyze_paper(model, paper_path=paper_path, result_path=str(_SUMMARY_PAPER_HOME / f"{_format_paper_title(paper.title)}_{model}.md"))
     
 
 def _init_openai_model(model: str):
@@ -58,7 +50,22 @@ def _init_model(model:str):
         return _init_openai_model(model)
     else:
         return _init_ollama_model(model)
-    
+
+def _analyze_paper(model: str, paper_path: str, result_path: str):
+    from langchain_core.messages import SystemMessage, HumanMessage
+    from utils.markdown import render_markdown
+    from utils.pdf import read_pdf
+
+    llm = _init_model(model)
+
+    messages = [
+        SystemMessage(content=render_markdown("PAPER_SUMMARY.md")),
+        HumanMessage(content=read_pdf(paper_path))
+    ]
+    ret = llm.invoke(messages)
+    with open(result_path, "w") as f:
+        f.write(ret.content)
+
 def _search_paper(paper: str, limit: int, date_range):
     from utils.www.arxiv import search_arvix_paper, ArvixQuery, ArxivCategory, ArxivOrder
 
@@ -84,3 +91,8 @@ def _is_arxiv_id(s: str) -> bool:
     import re
     pattern = r'^(?:arXiv:)?(?:(?:\d{4}\.\d{4,5})|(?:[a-z-]+(?:\.[A-Z]{2})?/\d{7}))(?:v\d+)?$'
     return re.fullmatch(pattern, s) is not None
+
+def _format_paper_title(origin: str) -> str:
+    origin = origin.lower()
+    import re
+    return f"{re.sub(r"\s+", "_", origin.strip())}"
