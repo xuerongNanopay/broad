@@ -28,7 +28,7 @@ def _run_research_paper_bot(
         "-p",
         help="""
             Accept three types of string: \n
-                1. Arvix Id(eg: 2604.20117|2604.20117v1) \n
+                1. Arvix Id(eg: 2604.20117|1706.03762v7 \n
                     - eg: -p 2604.20117 \n
                 2. Paper Title(eg: "To Know is to Construct: Schema-Constrained Generation for Agent Memory") \n
                     - eg: -p "To Know is to Construct: Schema-Constrained Generation for Agent Memory" \n
@@ -52,12 +52,23 @@ def _run_research_paper_bot(
         "--range",
         "-r",
         help="eg: 19910101-19910102"
-    )
+    ),
+    is_download: bool = typer.Option(
+        False,
+        "--download"
+        "-d",
+        help = "download the paper"
+    ),
+    # is_analyze: bool = typer.Option(
+
+    # )
 ):
     
     if date_range:
         beg, end = range.split(":", 1)
         date_range = (_parse_date(beg), _parse_date(end))
+    else:
+        date_range = None
 
     from .run_bot import run
     run(model.strip(), paper.strip(), max(1, limit), date_range)

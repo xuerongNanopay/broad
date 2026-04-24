@@ -28,20 +28,27 @@ class ArvixQuery(TypedDict):
 @dataclass
 class ArvixResult:
     url: str
+    entry_id: str
     updated: datetime
     published: datetime
     title: str
     summary: str | None
+    origin: arxiv.Result
 
     @classmethod
     def from_arvix_result(cls, ret: arxiv.Result):
         return ArvixResult(
             url=ret.entry_id,
+            entry_id=ret.entry_id,
             updated=ret.updated,
             published=ret.published,
             title=ret.title,
             summary=ret.summary,
+            origin=ret
         )
+    
+    def save_pdf_to(self, folder: str, filename:str) -> str:
+        return self.origin.download_pdf(dirpath=folder, filename=filename)
 
     def to_json(self, *, pretty=False):
         return json.dumps(self.__dict__, default=str, indent=2 if pretty else None)

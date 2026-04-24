@@ -18,7 +18,9 @@ def run(
 ):
     _init_dependencies()
 
-    _search_paper(paper, limit, date_range)
+    papers = _search_paper(paper, limit, date_range)
+    for r in papers:
+        print(r.to_json(pretty=True))
     # from langchain_core.messages import SystemMessage, HumanMessage
     # from utils.markdown import render_markdown
     # from utils.pdf import read_pdf
@@ -59,11 +61,10 @@ def _init_model(model:str):
     
 def _search_paper(paper: str, limit: int, date_range):
     from utils.www.arxiv import search_arvix_paper, ArvixQuery, ArxivCategory, ArxivOrder
-    temp = "A-MEM: Agentic Memory for LLM Agents"
 
     query: ArvixQuery = {}
     order = ArxivOrder.MOST_RELEVANT
-    if is_arxiv_id(paper):
+    if _is_arxiv_id(paper):
         query["ids"] = [paper]
     elif paper.startswith("title:"):
         query["title"] = paper.lstrip("title:")
@@ -74,12 +75,12 @@ def _search_paper(paper: str, limit: int, date_range):
         query["exact_titles"] = [paper]
 
     query["date_ranges"] = date_range
-    
-    rets = search_arvix_paper(query, sort_by=order, max_results=limit)
-    for r in rets:
-        print(r.to_json(pretty=True))
 
-def is_arxiv_id(s: str) -> bool:
+    rets = search_arvix_paper(query, sort_by=order, max_results=limit)
+
+    return rets
+
+def _is_arxiv_id(s: str) -> bool:
     import re
     pattern = r'^(?:arXiv:)?(?:(?:\d{4}\.\d{4,5})|(?:[a-z-]+(?:\.[A-Z]{2})?/\d{7}))(?:v\d+)?$'
     return re.fullmatch(pattern, s) is not None
