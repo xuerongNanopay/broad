@@ -17,9 +17,13 @@ def run(
     date_range: tuple[date, date] | None,
     is_analyze: bool,
 ):
+    from .state import init_state
+    init_state()
     _init_dependencies()
 
     papers = _search_paper(paper, limit, date_range)
+    return
+
     for r in papers:
         print(r.to_json(pretty=True))
     
