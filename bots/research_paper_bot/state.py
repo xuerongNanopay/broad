@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS arxiv_papers (
     arxiv_id VARCHAR(32),
     arxiv_version INTEGER,
     url VARCHAR(128),
-    title VARCHAR(128),
+    title VARCHAR(512),
     summary TEXT,
     updated TIMESTAMP,
     published TIMESTAMP,
@@ -83,7 +83,7 @@ class ArxivStore:
         with self._pool.connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO papers (
+                    INSERT INTO arxiv_papers (
                         arxiv_entity_id,
                         arxiv_id,
                         arxiv_version,

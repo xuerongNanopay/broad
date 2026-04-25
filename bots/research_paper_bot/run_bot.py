@@ -22,8 +22,9 @@ def run(
 
 
     papers = _search_paper(paper, limit, date_range)
+    print(f"total find: {len(papers)}")
     for r in papers:
-        print(arxiv_store.upsert_one(r))
+        arxiv_store.upsert_one(r)
     return
 
     for r in papers:

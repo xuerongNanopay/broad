@@ -65,7 +65,7 @@ def _run_research_paper_bot(
 ):
     
     if date_range:
-        beg, end = range.split(":", 1)
+        beg, end = date_range.split(":", 1)
         date_range = (_parse_date(beg), _parse_date(end))
     else:
         date_range = None
