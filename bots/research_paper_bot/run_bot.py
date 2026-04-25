@@ -39,11 +39,11 @@ def _init_openai_model(model: str):
     from langchain_openai import ChatOpenAI
     from utils.env import load_env
     load_env()
-    return ChatOpenAI(model=model)
+    return ChatOpenAI(model=model, temperature=0)
 
 def _init_ollama_model(model: str):
     from langchain_ollama import ChatOllama
-    return ChatOllama(model=model)
+    return ChatOllama(model=model, base_url="http://localhost:11434", temperature=0)
 
 def _init_model(model:str):
     if model.startswith("gpt"):
