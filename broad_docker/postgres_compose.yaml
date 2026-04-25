@@ -1,0 +1,27 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: postgres_17
+    restart: "no"
+
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - ../.broad/broad_docker/postgres:/var/lib/postgresql/data
+
+    command: >
+      postgres
+      -c logging_collector=off
+      -c log_statement=all
+      -c log_min_duration_statement=0
+      -c log_connections=on
+      -c log_disconnections=on
+      -c shared_buffers=256MB
+      -c wal_level=logical
