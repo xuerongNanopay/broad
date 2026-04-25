@@ -17,11 +17,13 @@ def run(
     date_range: tuple[date, date] | None,
     is_analyze: bool,
 ):
-    from .state import init_state
-    init_state()
-    _init_dependencies()
+    from .state import ArxivStore
+    arxiv_store = ArxivStore()
+
 
     papers = _search_paper(paper, limit, date_range)
+    for r in papers:
+        print(arxiv_store.upsert_one(r))
     return
 
     for r in papers:

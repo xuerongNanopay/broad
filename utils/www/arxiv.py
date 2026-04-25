@@ -28,7 +28,9 @@ class ArvixQuery(TypedDict):
 @dataclass
 class ArvixResult:
     url: str
-    entry_id: str
+    arxiv_entity_id: str
+    arxiv_id: str
+    arxiv_version: int|None
     updated: datetime
     published: datetime
     title: str
@@ -37,9 +39,13 @@ class ArvixResult:
 
     @classmethod
     def from_arvix_result(cls, ret: arxiv.Result):
+        arxiv_entity_id = _parse_arxiv_entity_id(ret.entry_id)
+        id, version = _maybe_parse_arvix_id_and_version(ret.entry_id)
         return ArvixResult(
             url=ret.entry_id,
-            entry_id=ret.entry_id,
+            arxiv_entity_id=arxiv_entity_id,
+            arxiv_id=id,
+            arxiv_version=version,
             updated=ret.updated,
             published=ret.published,
             title=ret.title,
@@ -89,7 +95,7 @@ def search_arvix_paper(
     return [ArvixResult.from_arvix_result(r) for r in results]
 
 def download_arxiv_pdf_paper(url: str, folder: str, filename: str) -> str:
-    paper_id = _parse_paper_id(url)
+    paper_id = _parse_arxiv_entity_id(url)
     client = arxiv.Client()
     search = arxiv.Search(id_list=[paper_id])
     paper = next(client.results(search))
@@ -125,7 +131,20 @@ def _format_query(query: ArvixQuery) -> str:
 
     return ret
 
-def _parse_paper_id(url: str) -> str:
+def _parse_arxiv_entity_id(url: str) -> str:
     return url.split("/")[-1] 
-# def download_paper(path: Path):
+
+def _maybe_parse_arvix_id_and_version(url: str) -> tuple[str, str|None]:
+    entity_id = _parse_arxiv_entity_id(url)
+    pattern = re.compile(r'^(?P<id>\d{4}\.\d{4,5})(?:v(?P<version>\d+))?$')
+
+
+    m = pattern.fullmatch(entity_id.strip())
+    if not m:
+        return entity_id, None
+    
+    return m.group("id"), int(m.group("version")) if m.group("version") else None
+    
+
+    # def download_paper(path: Path):
 #     pass
