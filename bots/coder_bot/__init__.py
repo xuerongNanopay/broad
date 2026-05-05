@@ -16,6 +16,7 @@ def _run_coder_bot(
         help="Short Running"
     )
 ):
-    print(f"This is coder bot: {short}")
+    from .bot import run_bot
+    run_bot()
 
 
