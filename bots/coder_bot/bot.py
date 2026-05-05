@@ -39,18 +39,21 @@ def coder_bot_main(
     temperature: float = 0,
     base_url: Optional[str] = None,
 ) -> str:
-    llm_provider = _parse_provider(provider)
-    llm = init_llm_client(
-        provider=llm_provider,
-        model=model,
-        temperature=temperature,
-        base_url=base_url,
-    )
+    from .github import sample_fetch_github_issues
+    sample_fetch_github_issues()
 
-    response = llm.invoke(prompt)
-    content = _response_content(response)
-    print(content)
-    return content
+    # llm_provider = _parse_provider(provider)
+    # llm = init_llm_client(
+    #     provider=llm_provider,
+    #     model=model,
+    #     temperature=temperature,
+    #     base_url=base_url,
+    # )
+
+    # response = llm.invoke(prompt)
+    # content = _response_content(response)
+    # print(content)
+    # return content
 
 
 def _parse_provider(provider: str) -> LLMProvider:
