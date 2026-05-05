@@ -16,7 +16,7 @@ def _run_coder_bot(
         help="Short Running"
     )
 ):
-    from .bot import run_bot
-    run_bot()
+    from .bot import coder_bot_main
+    coder_bot_main()
 
 
