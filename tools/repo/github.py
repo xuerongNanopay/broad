@@ -1,4 +1,5 @@
 from os import getenv
+from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
@@ -139,12 +140,12 @@ class GitHubRepoExplorer:
             "html_url": data.get("html_url"),
         }
 
-    def metadata(self, path: str = "", ref: str | None = None) -> list[dict] | dict:
+    def metadata(self, path: str = "", ref: str | None = None) -> list[dict]:
         params = {"ref": ref} if ref else None
         data = self._get(f"/repos/{self.full_name}/contents/{path.strip('/')}", params=params)
         if isinstance(data, list):
             return [_format_metadata(item) for item in data]
-        return _format_metadata(data)
+        return [_format_metadata(data)]
 
     def tree(
         self,
@@ -182,6 +183,12 @@ class GitHubRepoExplorer:
             "recent_open_issues": self.issues(limit=10),
         }
 
+    def download_zip(self, dest_path: str | Path, ref: str | None = None) -> Path:
+        return self._download_archive("zipball", dest_path, ref)
+
+    def download_tarball(self, dest_path: str | Path, ref: str | None = None) -> Path:
+        return self._download_archive("tarball", dest_path, ref)
+
     def _get(self, path: str, params: dict | None = None):
         with httpx.Client(base_url=self.base_url, headers=self._headers(), timeout=self.timeout) as client:
             response = client.get(path, params=params)
@@ -218,6 +225,28 @@ class GitHubRepoExplorer:
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         return headers
+
+    def _download_archive(self, archive_type: str, dest_path: str | Path, ref: str | None = None) -> Path:
+        if archive_type not in {"zipball", "tarball"}:
+            raise ValueError(f"Unsupported GitHub archive type: {archive_type}")
+
+        ref = ref or self.repo_info()["default_branch"]
+        output_path = Path(dest_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with httpx.Client(
+            base_url=self.base_url,
+            headers=self._headers(),
+            timeout=self.timeout,
+            follow_redirects=True,
+        ) as client:
+            with client.stream("GET", f"/repos/{self.full_name}/{archive_type}/{ref}") as response:
+                response.raise_for_status()
+                with output_path.open("wb") as output:
+                    for chunk in response.iter_bytes():
+                        output.write(chunk)
+
+        return output_path
 
 
 def fetch_github_issues(

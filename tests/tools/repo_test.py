@@ -51,3 +51,11 @@ def test_github_repo_file_content_metadata():
     explorer = GitHubRepoExplorer("surrealdb/surrealdb")
 
     pprint(explorer.metadata("README.md"))
+
+
+def test_download_github_repo_zip():
+    from tools.repo.github import GitHubRepoExplorer
+
+    explorer = GitHubRepoExplorer("surrealdb/surrealdb")
+
+    print(explorer.download_zip("/tmp/surrealdb.zip"))
