@@ -139,12 +139,12 @@ class GitHubRepoExplorer:
             "html_url": data.get("html_url"),
         }
 
-    def contents(self, path: str = "", ref: str | None = None) -> list[dict] | dict:
+    def metadata(self, path: str = "", ref: str | None = None) -> list[dict] | dict:
         params = {"ref": ref} if ref else None
         data = self._get(f"/repos/{self.full_name}/contents/{path.strip('/')}", params=params)
         if isinstance(data, list):
-            return [_format_content(item) for item in data]
-        return _format_content(data)
+            return [_format_metadata(item) for item in data]
+        return _format_metadata(data)
 
     def tree(
         self,
@@ -295,7 +295,7 @@ def _format_pull_request(pull: dict) -> dict:
     }
 
 
-def _format_content(item: dict) -> dict:
+def _format_metadata(item: dict) -> dict:
     return {
         "name": item.get("name"),
         "path": item.get("path"),

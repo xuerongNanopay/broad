@@ -42,3 +42,12 @@ def test_github_repo_main_language():
     explorer = GitHubRepoExplorer("surrealdb/surrealdb")
 
     print(explorer.main_language())
+
+
+def test_github_repo_file_content_metadata():
+    from pprint import pprint
+    from tools.repo.github import GitHubRepoExplorer
+
+    explorer = GitHubRepoExplorer("surrealdb/surrealdb")
+
+    pprint(explorer.metadata("README.md"))
