@@ -123,6 +123,12 @@ class GitHubRepoExplorer:
     def languages(self) -> dict[str, int]:
         return self._get(f"/repos/{self.full_name}/languages")
 
+    def main_language(self) -> str | None:
+        languages = self.languages()
+        if not languages:
+            return None
+        return max(languages, key=languages.get)
+
     def readme(self) -> dict:
         data = self._get(f"/repos/{self.full_name}/readme")
         return {

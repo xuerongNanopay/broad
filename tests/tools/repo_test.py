@@ -25,3 +25,20 @@ def test_github_repo_tree_truncated():
     explorer = GitHubRepoExplorer("surrealdb/surrealdb")
 
     print(explorer.is_tree_truncated())
+
+
+def test_github_repo_languages():
+    from pprint import pprint
+    from tools.repo.github import GitHubRepoExplorer
+
+    explorer = GitHubRepoExplorer("surrealdb/surrealdb")
+
+    pprint(explorer.languages())
+
+
+def test_github_repo_main_language():
+    from tools.repo.github import GitHubRepoExplorer
+
+    explorer = GitHubRepoExplorer("surrealdb/surrealdb")
+
+    print(explorer.main_language())
