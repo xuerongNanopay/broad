@@ -59,3 +59,20 @@ def test_download_github_repo_zip():
     explorer = GitHubRepoExplorer("surrealdb/surrealdb")
 
     print(explorer.download_zip("/tmp/surrealdb.zip"))
+
+
+def test_download_and_uncompress_github_repo_zip():
+    from tools.repo.github import GitHubRepoExplorer
+
+    explorer = GitHubRepoExplorer("surrealdb/surrealdb")
+
+    zip_path = explorer.download_zip("/tmp/surrealdb.zip")
+    print(explorer.uncompress_zip(zip_path, "/tmp/surrealdb", keep_repo_folder=False))
+
+
+def test_download_github_repo():
+    from tools.repo.github import GitHubRepoExplorer
+
+    explorer = GitHubRepoExplorer("surrealdb/surrealdb")
+
+    print(explorer.download("/tmp/surrealdb"))

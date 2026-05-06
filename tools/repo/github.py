@@ -1,6 +1,7 @@
 from os import getenv
 from pathlib import Path
 from urllib.parse import urlparse
+from zipfile import ZipFile
 
 import httpx
 
@@ -188,6 +189,46 @@ class GitHubRepoExplorer:
 
     def download_tarball(self, dest_path: str | Path, ref: str | None = None) -> Path:
         return self._download_archive("tarball", dest_path, ref)
+
+    def download(
+        self,
+        dest_dir: str | Path,
+        ref: str | None = None,
+        keep_repo_folder: bool = False,
+        archive_path: str | Path | None = None,
+    ) -> Path:
+        output_dir = Path(dest_dir)
+        zip_path = Path(archive_path) if archive_path else output_dir / f"{self.repo}.zip"
+        self.download_zip(zip_path, ref=ref)
+        return self.uncompress_zip(zip_path, output_dir, keep_repo_folder=keep_repo_folder)
+
+    def uncompress_zip(
+        self,
+        zip_path: str | Path,
+        dest_dir: str | Path,
+        keep_repo_folder: bool = True,
+    ) -> Path:
+        zip_path = Path(zip_path)
+        output_dir = Path(dest_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        extract_dir = output_dir / self.repo if keep_repo_folder else output_dir
+
+        with ZipFile(zip_path) as archive:
+            for info in archive.infolist():
+                path_parts = Path(info.filename).parts
+                if len(path_parts) <= 1:
+                    continue
+
+                target_path = extract_dir / Path(*path_parts[1:])
+                if info.is_dir():
+                    target_path.mkdir(parents=True, exist_ok=True)
+                    continue
+
+                target_path.parent.mkdir(parents=True, exist_ok=True)
+                with archive.open(info) as source, target_path.open("wb") as target:
+                    target.write(source.read())
+
+        return extract_dir
 
     def _get(self, path: str, params: dict | None = None):
         with httpx.Client(base_url=self.base_url, headers=self._headers(), timeout=self.timeout) as client:
