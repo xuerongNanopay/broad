@@ -140,7 +140,12 @@ class GitHubRepoExplorer:
             return [_format_content(item) for item in data]
         return _format_content(data)
 
-    def tree(self, ref: str | None = None, recursive: bool = True) -> list[dict]:
+    def tree(
+        self,
+        ref: str | None = None,
+        recursive: bool = True,
+        ignore_paths: list[str] | None = None,
+    ) -> list[dict]:
         ref = ref or self.repo_info()["default_branch"]
         params = {"recursive": "1"} if recursive else None
         data = self._get(f"/repos/{self.full_name}/git/trees/{ref}", params=params)
@@ -153,7 +158,14 @@ class GitHubRepoExplorer:
                 "url": item.get("url"),
             }
             for item in data.get("tree", [])
+            if not _is_ignored_path(item.get("path"), ignore_paths)
         ]
+
+    def is_tree_truncated(self, ref: str | None = None, recursive: bool = True) -> bool:
+        ref = ref or self.repo_info()["default_branch"]
+        params = {"recursive": "1"} if recursive else None
+        data = self._get(f"/repos/{self.full_name}/git/trees/{ref}", params=params)
+        return bool(data.get("truncated"))
 
     def summary(self) -> dict:
         info = self.repo_info()
@@ -230,6 +242,21 @@ def parse_github_repo(repo: str) -> tuple[str, str]:
         raise ValueError("GitHub repo must be in 'owner/repo' format or a GitHub repository URL")
 
     return parts[0], parts[1]
+
+
+def _is_ignored_path(path: str | None, ignore_paths: list[str] | None) -> bool:
+    if not path or not ignore_paths:
+        return False
+
+    normalized_path = path.strip("/")
+    for ignore_path in ignore_paths:
+        normalized_ignore = ignore_path.strip("/")
+        if not normalized_ignore:
+            continue
+        if normalized_path == normalized_ignore or normalized_path.startswith(f"{normalized_ignore}/"):
+            return True
+
+    return False
 
 
 def _format_issue(issue: dict) -> dict:
