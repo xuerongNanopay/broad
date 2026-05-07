@@ -7,6 +7,14 @@ from typing import Any, TypeVar
 
 from .base import AgentTool, ParameterScheme
 from .parameter import FunctionParameter
+from .scheme import (
+    ArrayScheme,
+    BooleanScheme,
+    IntegerScheme,
+    NumberScheme,
+    ObjectScheme,
+    StringScheme,
+)
 
 ToolHandler = Callable[..., Any]
 T = TypeVar("T", bound=ToolHandler)
@@ -192,9 +200,15 @@ def _first_doc_line(func: ToolHandler) -> str:
 __all__ = [
     "AgentTool",
     "AgentToolError",
+    "ArrayScheme",
+    "BooleanScheme",
     "FunctionParameter",
     "FunctionAgentTool",
+    "IntegerScheme",
+    "NumberScheme",
+    "ObjectScheme",
     "ParameterScheme",
+    "StringScheme",
     "ToolAlreadyRegisteredError",
     "ToolRegistry",
     "default_registry",

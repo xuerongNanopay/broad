@@ -4,9 +4,15 @@ import pytest
 
 from agent.tools import (
     AgentTool,
+    ArrayScheme,
+    BooleanScheme,
     FunctionAgentTool,
     FunctionParameter,
+    IntegerScheme,
+    NumberScheme,
+    ObjectScheme,
     ParameterScheme,
+    StringScheme,
     ToolAlreadyRegisteredError,
     ToolRegistry,
 )
@@ -46,6 +52,98 @@ def test_function_parameter_implements_parameter_scheme():
         "type": "integer",
         "description": "Maximum item count.",
         "default": 10,
+    }
+
+
+def test_string_scheme_renders_constraints():
+    scheme = StringScheme(
+        "query",
+        "Search query.",
+        min_length=2,
+        max_length=120,
+        pattern="^[a-z]+$",
+        enum=["code", "docs"],
+        nullable=True,
+    )
+
+    assert isinstance(scheme, ParameterScheme)
+    assert scheme.name == "query"
+    assert scheme.type == "string"
+    assert scheme.required is True
+    assert scheme.to_tool_scheme() == {
+        "type": "string",
+        "description": "Search query.",
+        "enum": ["code", "docs"],
+        "nullable": True,
+        "minLength": 2,
+        "maxLength": 120,
+        "pattern": "^[a-z]+$",
+    }
+
+
+def test_scalar_schemes_render_tool_schemes():
+    integer = IntegerScheme("limit", "Maximum results.", minimum=1, maximum=100, default=10, required=False)
+    number = NumberScheme("temperature", minimum=0, maximum=2, multiple_of=0.1)
+    boolean = BooleanScheme("include_archived", default=False)
+
+    assert integer.to_tool_scheme() == {
+        "type": "integer",
+        "description": "Maximum results.",
+        "default": 10,
+        "minimum": 1,
+        "maximum": 100,
+    }
+    assert number.to_tool_scheme() == {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 2,
+        "multipleOf": 0.1,
+    }
+    assert boolean.to_tool_scheme() == {
+        "type": "boolean",
+        "default": False,
+    }
+
+
+def test_array_and_object_schemes_render_nested_tool_schemes():
+    tags = ArrayScheme(
+        "tags",
+        "Labels to filter by.",
+        items=StringScheme("tag"),
+        min_items=1,
+        unique_items=True,
+        required=False,
+    )
+    options = ObjectScheme(
+        "options",
+        properties={
+            "limit": IntegerScheme("limit", minimum=1, maximum=50, default=10, required=False),
+            "include_archived": BooleanScheme("include_archived"),
+        },
+        additional_properties=False,
+    )
+
+    assert all(isinstance(scheme, ParameterScheme) for scheme in options.properties.values())
+    assert tags.to_tool_scheme() == {
+        "type": "array",
+        "description": "Labels to filter by.",
+        "items": {"type": "string"},
+        "minItems": 1,
+        "uniqueItems": True,
+    }
+    assert options.to_tool_scheme() == {
+        "type": "object",
+        "properties": {
+            "limit": {
+                "type": "integer",
+                "default": 10,
+                "minimum": 1,
+                "maximum": 50,
+            },
+            "include_archived": {"type": "boolean"},
+        },
+        "required": ["include_archived"],
+        "additionalProperties": False,
     }
 
 
