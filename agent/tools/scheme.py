@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from inspect import Parameter
 from types import NoneType, UnionType
-from typing import Any, Union, get_args, get_origin
+from typing import Annotated, Any, Union, get_args, get_origin
 
 from .base import ParameterScheme
 
@@ -360,7 +360,15 @@ def _scheme_from_annotation(
     default: Any = Parameter.empty,
     required: bool = True,
 ) -> ParameterScheme:
-    annotation, nullable = _normalize_annotation(annotation)
+    annotation, metadata, nullable = _unwrap_annotation(annotation)
+    metadata_scheme, metadata_description, metadata_options = _parse_annotated_metadata(metadata)
+    if metadata_scheme is not None:
+        return metadata_scheme
+
+    description = metadata_description or description
+    if "description" in metadata_options:
+        description = str(metadata_options.pop("description"))
+    nullable = bool(metadata_options.pop("nullable", nullable))
 
     if isinstance(annotation, str):
         return _scheme_from_string_annotation(
@@ -370,6 +378,7 @@ def _scheme_from_annotation(
             default=default,
             required=required,
             nullable=nullable,
+            options=metadata_options,
         )
 
     origin = get_origin(annotation)
@@ -377,31 +386,113 @@ def _scheme_from_annotation(
     annotation = origin or annotation
 
     if annotation is str or annotation is Parameter.empty or annotation is Any:
-        return StringScheme(name, description, default=default, required=required, nullable=nullable)
+        return StringScheme(
+            name,
+            description,
+            default=default,
+            required=required,
+            nullable=nullable,
+            **_scheme_options(metadata_options, {"enum", "max_length", "min_length", "pattern"}),
+        )
     if annotation is bool:
         return BooleanScheme(name, description, default=default, required=required, nullable=nullable)
     if annotation is int:
-        return IntegerScheme(name, description, default=default, required=required, nullable=nullable)
+        return IntegerScheme(
+            name,
+            description,
+            default=default,
+            required=required,
+            nullable=nullable,
+            **_scheme_options(
+                metadata_options,
+                {"enum", "exclusive_maximum", "exclusive_minimum", "maximum", "minimum", "multiple_of"},
+            ),
+        )
     if annotation is float:
-        return NumberScheme(name, description, default=default, required=required, nullable=nullable)
+        return NumberScheme(
+            name,
+            description,
+            default=default,
+            required=required,
+            nullable=nullable,
+            **_scheme_options(
+                metadata_options,
+                {"enum", "exclusive_maximum", "exclusive_minimum", "maximum", "minimum", "multiple_of"},
+            ),
+        )
     if annotation in {list, tuple, set}:
-        items = None
+        items = metadata_options.get("items")
         if args:
-            items = _scheme_from_annotation("item", args[0])
-        return ArrayScheme(name, description, items=items, default=default, required=required, nullable=nullable)
+            items = items or _scheme_from_annotation("item", args[0])
+        return ArrayScheme(
+            name,
+            description,
+            items=items,
+            default=default,
+            required=required,
+            nullable=nullable,
+            **_scheme_options(metadata_options, {"max_items", "min_items", "unique_items"}),
+        )
     if annotation is dict:
-        return ObjectScheme(name, description, default=default, required=required, nullable=nullable)
+        return ObjectScheme(
+            name,
+            description,
+            default=default,
+            required=required,
+            nullable=nullable,
+            **_scheme_options(
+                metadata_options,
+                {"additional_properties", "max_properties", "min_properties", "properties"},
+            ),
+        )
     return StringScheme(name, description, default=default, required=required, nullable=nullable)
 
 
-def _normalize_annotation(annotation: Any) -> tuple[Any, bool]:
-    origin = get_origin(annotation)
-    args = get_args(annotation)
-    if origin in {Union, UnionType}:
-        non_none_args = [arg for arg in args if arg is not NoneType]
-        if len(non_none_args) == 1:
-            return non_none_args[0], True
-    return annotation, False
+def _unwrap_annotation(annotation: Any) -> tuple[Any, tuple[Any, ...], bool]:
+    metadata: list[Any] = []
+    nullable = False
+
+    while True:
+        origin = get_origin(annotation)
+        args = get_args(annotation)
+
+        if origin is Annotated:
+            annotation = args[0]
+            metadata.extend(args[1:])
+            continue
+
+        if origin in {Union, UnionType}:
+            non_none_args = [arg for arg in args if arg is not NoneType]
+            if len(non_none_args) == 1:
+                annotation = non_none_args[0]
+                nullable = True
+                continue
+
+        return annotation, tuple(metadata), nullable
+
+
+def _parse_annotated_metadata(metadata: tuple[Any, ...]) -> tuple[ParameterScheme | None, str, dict[str, Any]]:
+    scheme = None
+    description = ""
+    options: dict[str, Any] = {}
+
+    for item in metadata:
+        if isinstance(item, ParameterScheme):
+            scheme = item
+        elif isinstance(item, str):
+            description = description or item
+        elif isinstance(item, dict):
+            options.update(item)
+
+    return scheme, description, options
+
+
+def _scheme_options(options: dict[str, Any], allowed: set[str]) -> dict[str, Any]:
+    return {
+        name: value
+        for name, value in options.items()
+        if name in allowed
+    }
 
 
 def _scheme_from_string_annotation(
@@ -412,20 +503,62 @@ def _scheme_from_string_annotation(
     default: Any,
     required: bool,
     nullable: bool,
+    options: dict[str, Any],
 ) -> ParameterScheme:
     type_name = annotation.removeprefix("typing.").split("[", maxsplit=1)[0]
     if type_name in {"str", "string"}:
-        return StringScheme(name, description, default=default, required=required, nullable=nullable)
+        return StringScheme(
+            name,
+            description,
+            default=default,
+            required=required,
+            nullable=nullable,
+            **_scheme_options(options, {"enum", "max_length", "min_length", "pattern"}),
+        )
     if type_name in {"bool", "boolean"}:
         return BooleanScheme(name, description, default=default, required=required, nullable=nullable)
     if type_name in {"int", "integer"}:
-        return IntegerScheme(name, description, default=default, required=required, nullable=nullable)
+        return IntegerScheme(
+            name,
+            description,
+            default=default,
+            required=required,
+            nullable=nullable,
+            **_scheme_options(
+                options,
+                {"enum", "exclusive_maximum", "exclusive_minimum", "maximum", "minimum", "multiple_of"},
+            ),
+        )
     if type_name in {"float", "number"}:
-        return NumberScheme(name, description, default=default, required=required, nullable=nullable)
+        return NumberScheme(
+            name,
+            description,
+            default=default,
+            required=required,
+            nullable=nullable,
+            **_scheme_options(
+                options,
+                {"enum", "exclusive_maximum", "exclusive_minimum", "maximum", "minimum", "multiple_of"},
+            ),
+        )
     if type_name in {"list", "tuple", "set"}:
-        return ArrayScheme(name, description, default=default, required=required, nullable=nullable)
+        return ArrayScheme(
+            name,
+            description,
+            default=default,
+            required=required,
+            nullable=nullable,
+            **_scheme_options(options, {"items", "max_items", "min_items", "unique_items"}),
+        )
     if type_name == "dict":
-        return ObjectScheme(name, description, default=default, required=required, nullable=nullable)
+        return ObjectScheme(
+            name,
+            description,
+            default=default,
+            required=required,
+            nullable=nullable,
+            **_scheme_options(options, {"additional_properties", "max_properties", "min_properties", "properties"}),
+        )
     return StringScheme(name, description, default=default, required=required, nullable=nullable)
 
 

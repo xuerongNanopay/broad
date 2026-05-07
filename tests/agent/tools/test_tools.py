@@ -1,4 +1,5 @@
 from inspect import Parameter
+from typing import Annotated
 
 import pytest
 
@@ -45,6 +46,73 @@ def test_function_tool_uses_parameter_scheme_instances():
     assert parameters["limit"].to_tool_scheme() == {
         "type": "integer",
         "default": 10,
+    }
+
+
+def test_function_tool_supports_annotated_parameter_descriptions_and_constraints():
+    def search(
+        query: Annotated[str, "Search query."],
+        tags: Annotated[list[str], {"description": "Labels to filter by.", "min_items": 1}],
+        limit: Annotated[int, {"description": "Maximum results.", "minimum": 1, "maximum": 100}] = 10,
+    ) -> None:
+        """Search indexed documents."""
+
+    tool = FunctionAgentTool.from_function(search)
+
+    assert tool.to_tool_scheme() == {
+        "name": "search",
+        "description": "Search indexed documents.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "Search query.",
+                },
+                "tags": {
+                    "type": "array",
+                    "description": "Labels to filter by.",
+                    "items": {"type": "string"},
+                    "minItems": 1,
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum results.",
+                    "default": 10,
+                    "minimum": 1,
+                    "maximum": 100,
+                },
+            },
+            "required": ["query", "tags"],
+        },
+    }
+
+
+def test_function_tool_supports_annotated_nullable_parameters():
+    def load(slug: Annotated[str | None, "Optional slug."] = None) -> None:
+        """Load a page."""
+
+    parameter = FunctionAgentTool.from_function(load).parameters["slug"]
+
+    assert parameter.to_tool_scheme() == {
+        "type": "string",
+        "description": "Optional slug.",
+        "default": None,
+        "nullable": True,
+    }
+
+
+def test_function_tool_supports_annotated_scheme_override():
+    def search(query: Annotated[str, StringScheme("query", "Search query.", min_length=2)]) -> None:
+        """Search indexed documents."""
+
+    parameter = FunctionAgentTool.from_function(search).parameters["query"]
+
+    assert isinstance(parameter, StringScheme)
+    assert parameter.to_tool_scheme() == {
+        "type": "string",
+        "description": "Search query.",
+        "minLength": 2,
     }
 
 
