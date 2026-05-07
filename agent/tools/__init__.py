@@ -31,7 +31,7 @@ class ToolRegistry:
         self._tools[tool.name] = tool
         return tool
 
-    def tool(
+    def function_tool(
         self,
         func: T | None = None,
         *,
@@ -64,26 +64,8 @@ class ToolRegistry:
         call_args.update(kwargs)
         return self.get(name).exec(**call_args)
 
-    def as_langchain_tools(self) -> list[Any]:
-        return [tool.as_langchain_tool() for tool in self.list()]
 
-
-default_registry = ToolRegistry()
-
-
-def tool(
-    func: T | None = None,
-    *,
-    name: str | None = None,
-    description: str | None = None,
-    metadata: Mapping[str, Any] | None = None,
-):
-    return default_registry.tool(
-        func,
-        name=name,
-        description=description,
-        metadata=metadata,
-    )
+global_tool_registry = ToolRegistry()
 
 
 __all__ = [
@@ -97,6 +79,5 @@ __all__ = [
     "ParameterScheme",
     "StringScheme",
     "ToolRegistry",
-    "default_registry",
-    "tool",
+    "global_tool_registry",
 ]

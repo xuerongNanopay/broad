@@ -9,8 +9,7 @@ from agent.tools import (
     ParameterScheme,
     StringScheme,
     ToolRegistry,
-    default_registry,
-    tool,
+    global_tool_registry,
 )
 
 __all__ = [
@@ -24,6 +23,5 @@ __all__ = [
     "ParameterScheme",
     "StringScheme",
     "ToolRegistry",
-    "default_registry",
-    "tool",
+    "global_tool_registry",
 ]

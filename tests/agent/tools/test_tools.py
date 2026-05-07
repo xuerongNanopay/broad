@@ -210,7 +210,7 @@ def test_array_and_object_schemes_render_nested_tool_schemes():
 def test_registry_registers_and_runs_tools():
     registry = ToolRegistry()
 
-    @registry.tool(name="greet", description="Create a greeting.")
+    @registry.function_tool(name="greet", description="Create a greeting.")
     def greet(name: str) -> str:
         return f"Hello, {name}"
 
@@ -255,12 +255,12 @@ def test_registry_runs_custom_agent_tool_subclass():
 def test_registry_rejects_duplicate_names():
     registry = ToolRegistry()
 
-    @registry.tool(description="First tool.")
+    @registry.function_tool(description="First tool.")
     def sample() -> str:
         return "first"
 
     with pytest.raises(ValueError):
-        @registry.tool(name="sample", description="Second tool.")
+        @registry.function_tool(name="sample", description="Second tool.")
         def duplicate() -> str:
             return "second"
 
