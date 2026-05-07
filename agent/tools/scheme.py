@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from inspect import Parameter
-from typing import Any
+from types import NoneType, UnionType
+from typing import Any, Union, get_args, get_origin
 
 from .base import ParameterScheme
 
 
-class BaseParameterScheme(ParameterScheme):
+class _BaseParameterScheme(ParameterScheme):
     type_name: str
 
     def __init__(
@@ -77,7 +78,7 @@ class BaseParameterScheme(ParameterScheme):
         pass
 
 
-class StringScheme(BaseParameterScheme):
+class StringScheme(_BaseParameterScheme):
     type_name = "string"
 
     def __init__(
@@ -126,7 +127,7 @@ class StringScheme(BaseParameterScheme):
             scheme["pattern"] = self.pattern
 
 
-class IntegerScheme(BaseParameterScheme):
+class IntegerScheme(_BaseParameterScheme):
     type_name = "integer"
 
     def __init__(
@@ -171,7 +172,7 @@ class IntegerScheme(BaseParameterScheme):
             scheme["multipleOf"] = self._multiple_of
 
 
-class NumberScheme(BaseParameterScheme):
+class NumberScheme(_BaseParameterScheme):
     type_name = "number"
 
     def __init__(
@@ -216,7 +217,7 @@ class NumberScheme(BaseParameterScheme):
             scheme["multipleOf"] = self._multiple_of
 
 
-class BooleanScheme(BaseParameterScheme):
+class BooleanScheme(_BaseParameterScheme):
     type_name = "boolean"
 
     def __init__(
@@ -237,7 +238,7 @@ class BooleanScheme(BaseParameterScheme):
         )
 
 
-class ArrayScheme(BaseParameterScheme):
+class ArrayScheme(_BaseParameterScheme):
     type_name = "array"
 
     def __init__(
@@ -280,7 +281,7 @@ class ArrayScheme(BaseParameterScheme):
             scheme["uniqueItems"] = self._unique_items
 
 
-class ObjectScheme(BaseParameterScheme):
+class ObjectScheme(_BaseParameterScheme):
     type_name = "object"
 
     def __init__(
@@ -342,9 +343,94 @@ def _nested_scheme(scheme: ParameterScheme | dict[str, Any]) -> dict[str, Any]:
     return scheme
 
 
+def _scheme_from_parameter(parameter: Parameter) -> ParameterScheme:
+    return _scheme_from_annotation(
+        parameter.name,
+        parameter.annotation,
+        default=parameter.default,
+        required=parameter.default is Parameter.empty,
+    )
+
+
+def _scheme_from_annotation(
+    name: str,
+    annotation: Any,
+    *,
+    description: str = "",
+    default: Any = Parameter.empty,
+    required: bool = True,
+) -> ParameterScheme:
+    annotation, nullable = _normalize_annotation(annotation)
+
+    if isinstance(annotation, str):
+        return _scheme_from_string_annotation(
+            name,
+            annotation,
+            description=description,
+            default=default,
+            required=required,
+            nullable=nullable,
+        )
+
+    origin = get_origin(annotation)
+    args = get_args(annotation)
+    annotation = origin or annotation
+
+    if annotation is str or annotation is Parameter.empty or annotation is Any:
+        return StringScheme(name, description, default=default, required=required, nullable=nullable)
+    if annotation is bool:
+        return BooleanScheme(name, description, default=default, required=required, nullable=nullable)
+    if annotation is int:
+        return IntegerScheme(name, description, default=default, required=required, nullable=nullable)
+    if annotation is float:
+        return NumberScheme(name, description, default=default, required=required, nullable=nullable)
+    if annotation in {list, tuple, set}:
+        items = None
+        if args:
+            items = _scheme_from_annotation("item", args[0])
+        return ArrayScheme(name, description, items=items, default=default, required=required, nullable=nullable)
+    if annotation is dict:
+        return ObjectScheme(name, description, default=default, required=required, nullable=nullable)
+    return StringScheme(name, description, default=default, required=required, nullable=nullable)
+
+
+def _normalize_annotation(annotation: Any) -> tuple[Any, bool]:
+    origin = get_origin(annotation)
+    args = get_args(annotation)
+    if origin in {Union, UnionType}:
+        non_none_args = [arg for arg in args if arg is not NoneType]
+        if len(non_none_args) == 1:
+            return non_none_args[0], True
+    return annotation, False
+
+
+def _scheme_from_string_annotation(
+    name: str,
+    annotation: str,
+    *,
+    description: str,
+    default: Any,
+    required: bool,
+    nullable: bool,
+) -> ParameterScheme:
+    type_name = annotation.removeprefix("typing.").split("[", maxsplit=1)[0]
+    if type_name in {"str", "string"}:
+        return StringScheme(name, description, default=default, required=required, nullable=nullable)
+    if type_name in {"bool", "boolean"}:
+        return BooleanScheme(name, description, default=default, required=required, nullable=nullable)
+    if type_name in {"int", "integer"}:
+        return IntegerScheme(name, description, default=default, required=required, nullable=nullable)
+    if type_name in {"float", "number"}:
+        return NumberScheme(name, description, default=default, required=required, nullable=nullable)
+    if type_name in {"list", "tuple", "set"}:
+        return ArrayScheme(name, description, default=default, required=required, nullable=nullable)
+    if type_name == "dict":
+        return ObjectScheme(name, description, default=default, required=required, nullable=nullable)
+    return StringScheme(name, description, default=default, required=required, nullable=nullable)
+
+
 __all__ = [
     "ArrayScheme",
-    "BaseParameterScheme",
     "BooleanScheme",
     "IntegerScheme",
     "NumberScheme",

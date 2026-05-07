@@ -6,7 +6,6 @@ from inspect import Parameter, signature
 from typing import Any, TypeVar
 
 from .base import AgentTool, ParameterScheme
-from .parameter import FunctionParameter
 from .scheme import (
     ArrayScheme,
     BooleanScheme,
@@ -14,6 +13,7 @@ from .scheme import (
     NumberScheme,
     ObjectScheme,
     StringScheme,
+    _scheme_from_parameter,
 )
 
 ToolHandler = Callable[..., Any]
@@ -70,13 +70,13 @@ class FunctionAgentTool(AgentTool):
         return self._description
 
     @property
-    def parameters(self) -> dict[str, FunctionParameter]:
-        params: dict[str, FunctionParameter] = {}
+    def parameters(self) -> dict[str, ParameterScheme]:
+        params: dict[str, ParameterScheme] = {}
         for parameter in signature(self.handler).parameters.values():
             if parameter.kind in {Parameter.VAR_POSITIONAL, Parameter.VAR_KEYWORD}:
                 continue
 
-            params[parameter.name] = FunctionParameter.from_inspect_parameter(parameter)
+            params[parameter.name] = _scheme_from_parameter(parameter)
         return params
 
     def exec(self, **kwargs: Any) -> Any:
@@ -202,7 +202,6 @@ __all__ = [
     "AgentToolError",
     "ArrayScheme",
     "BooleanScheme",
-    "FunctionParameter",
     "FunctionAgentTool",
     "IntegerScheme",
     "NumberScheme",

@@ -7,7 +7,6 @@ from agent.tools import (
     ArrayScheme,
     BooleanScheme,
     FunctionAgentTool,
-    FunctionParameter,
     IntegerScheme,
     NumberScheme,
     ObjectScheme,
@@ -34,23 +33,17 @@ def test_agent_tool_wraps_function_and_exposes_parameters():
     assert all(isinstance(parameter, ParameterScheme) for parameter in tool.parameters.values())
 
 
-def test_function_parameter_implements_parameter_scheme():
-    parameter = FunctionParameter(
-        _name="limit",
-        annotation=int,
-        _description="Maximum item count.",
-        _default=10,
-        _required=False,
-    )
+def test_function_tool_uses_parameter_scheme_instances():
+    def configure(limit: int = 10, include_archived: bool = False) -> None:
+        """Configure a search."""
 
-    assert isinstance(parameter, ParameterScheme)
-    assert parameter.name == "limit"
-    assert parameter.type == "integer"
-    assert parameter.default == 10
-    assert parameter.required is False
-    assert parameter.to_tool_scheme() == {
+    parameters = FunctionAgentTool.from_function(configure).parameters
+
+    assert isinstance(parameters["limit"], ParameterScheme)
+    assert isinstance(parameters["limit"], IntegerScheme)
+    assert isinstance(parameters["include_archived"], BooleanScheme)
+    assert parameters["limit"].to_tool_scheme() == {
         "type": "integer",
-        "description": "Maximum item count.",
         "default": 10,
     }
 
