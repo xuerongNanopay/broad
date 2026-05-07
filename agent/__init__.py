@@ -1,6 +1,5 @@
 from agent.tools import (
     AgentTool,
-    AgentToolError,
     ArrayScheme,
     BooleanScheme,
     FunctionAgentTool,
@@ -9,7 +8,6 @@ from agent.tools import (
     ObjectScheme,
     ParameterScheme,
     StringScheme,
-    ToolAlreadyRegisteredError,
     ToolRegistry,
     default_registry,
     tool,
@@ -17,7 +15,6 @@ from agent.tools import (
 
 __all__ = [
     "AgentTool",
-    "AgentToolError",
     "ArrayScheme",
     "BooleanScheme",
     "FunctionAgentTool",
@@ -26,7 +23,6 @@ __all__ = [
     "ObjectScheme",
     "ParameterScheme",
     "StringScheme",
-    "ToolAlreadyRegisteredError",
     "ToolRegistry",
     "default_registry",
     "tool",

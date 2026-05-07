@@ -13,7 +13,6 @@ from agent.tools import (
     ObjectScheme,
     ParameterScheme,
     StringScheme,
-    ToolAlreadyRegisteredError,
     ToolRegistry,
 )
 
@@ -260,7 +259,7 @@ def test_registry_rejects_duplicate_names():
     def sample() -> str:
         return "first"
 
-    with pytest.raises(ToolAlreadyRegisteredError):
+    with pytest.raises(ValueError):
         @registry.tool(name="sample", description="Second tool.")
         def duplicate() -> str:
             return "second"
