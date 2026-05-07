@@ -33,6 +33,19 @@ def test_agent_tool_wraps_function_and_exposes_parameters():
     assert all(isinstance(parameter, ParameterScheme) for parameter in tool.parameters.values())
 
 
+def test_agent_tool_uses_full_cleaned_docstring_as_description():
+    def summarize(text: str) -> str:
+        """Summarize text.
+
+        Preserve the core meaning.
+        """
+        return text
+
+    tool = FunctionAgentTool.from_function(summarize)
+
+    assert tool.description == "Summarize text.\n\nPreserve the core meaning."
+
+
 def test_function_tool_uses_parameter_scheme_instances():
     def configure(limit: int = 10, include_archived: bool = False) -> None:
         """Configure a search."""

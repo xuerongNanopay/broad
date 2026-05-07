@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from inspect import Parameter, signature
+from inspect import Parameter, cleandoc, signature
 from typing import Any, TypeVar
 
 from .base import AgentTool, ParameterScheme
@@ -29,7 +29,7 @@ class FunctionAgentTool(AgentTool):
         metadata: Mapping[str, Any] | None = None,
     ) -> "FunctionAgentTool":
         tool_name = name or func.__name__
-        tool_description = description or _first_doc_line(func)
+        tool_description = description or _maybe_from_doc(func)
         return cls(
             _name=tool_name,
             _description=tool_description,
@@ -106,11 +106,11 @@ class FunctionAgentTool(AgentTool):
         )
 
 
-def _first_doc_line(func: ToolHandler) -> str:
+def _maybe_from_doc(func: ToolHandler) -> str:
     doc = getattr(func, "__doc__", None)
     if not doc:
         return ""
-    return doc.strip().splitlines()[0].strip()
+    return cleandoc(doc)
 
 
 __all__ = [
