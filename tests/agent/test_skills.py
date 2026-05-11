@@ -88,3 +88,22 @@ metadata: {"custom":true}
         "description": "Workspace weather skill.",
         "metadata": {"custom": True},
     }
+
+
+def test_build_skills_summary_uses_skill_metadata_description(tmp_path):
+    workspace_skill = tmp_path / "skills" / "custom"
+    workspace_skill.mkdir(parents=True)
+    workspace_skill.joinpath("SKILL.md").write_text(
+        """---
+name: custom
+description: Custom workspace skill.
+---
+
+# Custom
+""",
+        encoding="utf-8",
+    )
+
+    summary = SkillsStore(tmp_path, builtin_skills_dir=None).build_skills_summary()
+
+    assert summary == "- **custom** - Custom workspace skill."

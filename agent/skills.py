@@ -90,6 +90,24 @@ class SkillsStore:
             return content[match.end():].strip()
         return content
     
+    def build_skills_summary(self) -> str:
+        all_skills = self.list_skills()
+        if not all_skills:
+            return ""
+        
+        parts: list[str] = []
+        for skill in all_skills:
+            skill_name = skill["name"]
+            skill_metadata = self.load_skill_metadata(skill_name) or {}
+            skill_description = skill_metadata.get("description")
+
+            if skill_description:
+                parts.append(f"- **{skill_name}** - {skill_description}")
+            else:
+                parts.append(f"- **{skill_name}**")
+
+        return "\n".join(parts)
+
     def load_skill_metadata(self, skill_name: str) -> dict | None:
         content = self.load_skill_md_file(skill_name)
         if not content or not content.startswith("---"):
