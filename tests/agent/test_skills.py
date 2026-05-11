@@ -1,4 +1,4 @@
-from agent.skills import BUILTIN_SKILLS_DIR, SkillsLoader
+from agent.skills import BUILTIN_SKILLS_DIR, SkillsStore
 
 
 def test_list_skills_includes_workspace_and_builtin_skills(tmp_path):
@@ -6,7 +6,7 @@ def test_list_skills_includes_workspace_and_builtin_skills(tmp_path):
     workspace_skill.mkdir(parents=True)
     workspace_skill.joinpath("SKILL.md").write_text("# Custom\n", encoding="utf-8")
 
-    loader = SkillsLoader(tmp_path)
+    loader = SkillsStore(tmp_path)
 
     skills = loader.list_skills()
     by_name = {skill["name"]: skill for skill in skills}
@@ -28,7 +28,7 @@ def test_list_skills_workspace_skill_overrides_builtin_skill(tmp_path):
     workspace_weather.mkdir(parents=True)
     workspace_weather.joinpath("SKILL.md").write_text("# Workspace Weather\n", encoding="utf-8")
 
-    skills = SkillsLoader(tmp_path).list_skills()
+    skills = SkillsStore(tmp_path).list_skills()
     weather_entries = [skill for skill in skills if skill["name"] == "weather"]
 
     assert weather_entries == [
@@ -41,13 +41,13 @@ def test_list_skills_workspace_skill_overrides_builtin_skill(tmp_path):
 
 
 def test_list_skills_skips_configured_skills(tmp_path):
-    loader = SkillsLoader(tmp_path, skip_skills=["weather"])
+    loader = SkillsStore(tmp_path, skip_skills=["weather"])
 
     skills = loader.list_skills()
 
     assert "weather" not in {skill["name"] for skill in skills}
 
 def test_list_skills(tmp_path):
-    loader = SkillsLoader(tmp_path)
+    loader = SkillsStore(tmp_path)
     skills = loader.list_skills()
     print(skills)
