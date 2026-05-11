@@ -1,6 +1,12 @@
 from pathlib import Path
+import re
 
 BUILTIN_SKILLS_DIR = Path(__file__).resolve().parent.parent / "skills"
+
+_SKILL_META = re.compile(
+    r"^---\s*\r?\n(.*?)\r?\n---\s*\r?\n?",
+    re.DOTALL,
+)
 
 class SkillsStore:
 
@@ -55,5 +61,30 @@ class SkillsStore:
 
         return skills
     
-    def load_skill(self, name: str) -> str | None:
+    def load_skill_md_file(self, skill_name: str) -> str | None:
         dirs = [self.workspace_dir]
+        if self.builtin_skills_dir:
+            dirs.append(self.builtin_skills_dir)
+        
+        for d in dirs:
+            file_path = d / skill_name / "SKILL.md"
+            if file_path.exists():
+                return file_path.read_text(encoding="uft-8")
+        
+        return None
+
+    def load_skills(self, skill_names: list[str]) -> str:
+        components = []
+
+        for name in skill_names:
+            if (md := self.load_skill_md_file(name)):
+                components.append(f"## Skill: {name}\n\n{self._maybe_remove_skill_meta(md)}")
+        
+        return "\n\n---\n\n".join(components)
+
+    def _maybe_remove_skill_meta(self, content: str) -> str:
+        if not content.startswith("---"):
+            return content
+        if (match := _SKILL_META.match(content)):
+            return content[match.end():].strip()
+        return content
