@@ -1,5 +1,6 @@
 from pathlib import Path
 from utils.markdown import render_markdown
+from agent.skills import SkillsStore
 
 class Context:
     
@@ -26,6 +27,7 @@ class SimpleContext(Context):
         self.system_prompt = system_prompt
         self.system_prompt_mds = system_prompt_mds
         self.workspace_dir_system_prompt_mds = workspace_dir_system_prompt_mds
+        self.skill_store = SkillsStore(workspace_dir)
 
     def build_system_prompt(self) -> str:
         components = []
