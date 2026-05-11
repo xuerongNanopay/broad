@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 import re
 
@@ -62,14 +63,14 @@ class SkillsStore:
         return skills
     
     def load_skill_md_file(self, skill_name: str) -> str | None:
-        dirs = [self.workspace_dir]
+        dirs = [self.workspace_skills_dir]
         if self.builtin_skills_dir:
             dirs.append(self.builtin_skills_dir)
         
         for d in dirs:
             file_path = d / skill_name / "SKILL.md"
             if file_path.exists():
-                return file_path.read_text(encoding="uft-8")
+                return file_path.read_text(encoding="utf-8")
         
         return None
 
@@ -88,3 +89,34 @@ class SkillsStore:
         if (match := _SKILL_META.match(content)):
             return content[match.end():].strip()
         return content
+    
+    def load_skill_metadata(self, skill_name: str) -> dict | None:
+        content = self.load_skill_md_file(skill_name)
+        if not content or not content.startswith("---"):
+            return None
+        
+        match = _SKILL_META.match(content)
+        if not match:
+            return None
+
+        return self._parse_skill_meta(match.group(1))
+
+    @staticmethod
+    def _parse_skill_meta(meta: str) -> dict:
+        ret = {}
+
+        for line in meta.splitlines():
+            key, sep, value = line.partition(":")
+            if not sep:
+                continue
+
+            ret[key.strip()] = SkillsStore._parse_skill_meta_value(value.strip())
+        
+        return ret
+
+    @staticmethod
+    def _parse_skill_meta_value(value: str):
+        if value.startswith(("{", "[")):
+            return json.loads(value)
+        
+        return value.strip("\"'")

@@ -51,3 +51,40 @@ def test_list_skills(tmp_path):
     loader = SkillsStore(tmp_path)
     skills = loader.list_skills()
     print(skills)
+
+
+def test_load_skill_metadata_returns_builtin_skill_meta(tmp_path):
+    loader = SkillsStore(tmp_path)
+
+    metadata = loader.load_skill_metadata("weather")
+
+    assert metadata == {
+        "name": "weather",
+        "description": "Get current weather and forecasts with verified location matching (no API key required).",
+        "homepage": "https://wttr.in/:help",
+        "metadata": {"nanobot": {"emoji": "🌤️", "requires": {"bins": ["curl"]}}},
+    }
+
+
+def test_load_skill_metadata_prefers_workspace_skill_meta(tmp_path):
+    workspace_weather = tmp_path / "skills" / "weather"
+    workspace_weather.mkdir(parents=True)
+    workspace_weather.joinpath("SKILL.md").write_text(
+        """---
+name: weather
+description: Workspace weather skill.
+metadata: {"custom":true}
+---
+
+# Workspace Weather
+""",
+        encoding="utf-8",
+    )
+
+    metadata = SkillsStore(tmp_path).load_skill_metadata("weather")
+
+    assert metadata == {
+        "name": "weather",
+        "description": "Workspace weather skill.",
+        "metadata": {"custom": True},
+    }
