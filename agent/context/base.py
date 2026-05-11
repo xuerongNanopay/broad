@@ -41,6 +41,9 @@ class SimpleContext(Context):
         if (sp := self._load_workspace_dir_system_prompt_md()):
             components.append(sp)
         
+        skills_summary = self.skill_store.build_skills_summary()
+
+        
 
 
     def _load_system_prompt_md(self) -> str:
