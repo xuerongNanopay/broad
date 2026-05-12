@@ -17,7 +17,7 @@ class SimpleContext(Context):
         workspace_dir: Path, 
         *,
         system_prompt: str | None = None,
-        system_prompt_mds: list[str] | None = None,
+        builtin_system_prompt_mds: list[str] | None = None,
         workspace_dir_system_prompt_mds: list[str] | None = None,
         skills: list[str] | None = None, 
         timezone: str | None = None):
@@ -25,8 +25,8 @@ class SimpleContext(Context):
         super().__init__(workspace_dir, skills, timezone)
         
         self.system_prompt = system_prompt
-        self.system_prompt_mds = system_prompt_mds
-        self.workspace_dir_system_prompt_mds = workspace_dir_system_prompt_mds
+        self.builtin_system_prompt_mds = builtin_system_prompt_mds or []
+        self.workspace_dir_system_prompt_mds = workspace_dir_system_prompt_mds or []
         self.skill_store = SkillsStore(workspace_dir)
 
     def build_system_prompt(self) -> str:
@@ -35,22 +35,22 @@ class SimpleContext(Context):
         if self.system_prompt:
             components.append(self.system_prompt)
         
-        if (sp := self._load_system_prompt_md()):
+        if (sp := self._load_builtin_system_prompt_md()):
             components.append(sp)
 
         if (sp := self._load_workspace_dir_system_prompt_md()):
             components.append(sp)
         
-        skills_summary = self.skill_store.build_skills_summary()
         if (skills_summary := self.skill_store.build_skills_summary()):
-            components.append(render_markdown("system_prompts/skills_template"))
+            components.append(render_markdown("system_prompts/skills_template.md", skills_summary=skills_summary))
 
+        return "\n\n".join(components)
 
-    def _load_system_prompt_md(self) -> str:
+    def _load_builtin_system_prompt_md(self) -> str:
         parts = []
 
-        for filename in self.system_prompt_mds:
-            parts.append(f"## {filename}\n\n{render_markdown(filename)}")
+        for filename in self.builtin_system_prompt_mds:
+            parts.append(render_markdown(filename))
         
         return "\n\n".join(parts) if parts else ""
 
@@ -61,7 +61,7 @@ class SimpleContext(Context):
             file_path = self.workspace_dir / filename
             if file_path.exists():
                 content = file_path.read_text(encoding="utf-8")
-                parts.append(f"## {filename}\n\n{content}")
+                parts.append(content)
         
         return "\n\n".join(parts) if parts else ""
 
