@@ -42,8 +42,8 @@ class SimpleContext(Context):
             components.append(sp)
         
         skills_summary = self.skill_store.build_skills_summary()
-
-        
+        if (skills_summary := self.skill_store.build_skills_summary()):
+            components.append(render_markdown("system_prompts/skills_template"))
 
 
     def _load_system_prompt_md(self) -> str:
