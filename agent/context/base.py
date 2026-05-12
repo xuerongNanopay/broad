@@ -82,7 +82,7 @@ class InMemSessionContext(Context):
             builtin_system_prompt_mds=builtin_system_prompt_mds,
             workspace_dir_system_prompt_mds=workspace_dir_system_prompt_mds,
         )
-        self.messages: list[dict[str, Any]] = []
+        self.history: list[dict[str, Any]] = []
         self.created_at = self._utc_now()
         self.update_at = self.created_at
 
@@ -94,12 +94,81 @@ class InMemSessionContext(Context):
             "timestamp": timestamp,
             **kwargs,
         }
+        self.history.append(message)
         self.update_at = timestamp
         return message
+    
+    def get_history(
+        self,
+        *,
+        max_messages: int = 120, 
+        max_tokens: int = 0
+    ) -> list[dict[str, Any]]:
+        
+        max_messages = max_messages if max_messages > 0 else 120
+        
+        history = list(self.history)
+        history = history[-max_messages:]
+        history = self._filter_begin_non_user_role(history)
+        history = self._filter_until_a_paired_tool_turn(history)
+        
+
+        if max_messages <= 0:
+            return []
+        history = history[-max_messages:]
+
+        if max_tokens <= 0:
+            return []
+        
+        if max_tokens > 0 and history:
+            pass
+
+        ret = []
+        total_tokens = 0
+        for message in reversed(history):
+            message_tokens = self._count_message_tokens(message)
+            if total_tokens + message_tokens > max_tokens:
+                break
+
+            ret.append(message)
+            total_tokens += message_tokens
+
+        ret.reverse()
+        return ret
+    
+    def _filter_begin_non_user_role(self, history: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        for i, msg in enumerate(history):
+            if msg.get("role") == "user":
+                history = history[i:]
+                return history
+        return history
+    
+    def _filter_until_a_paired_tool_turn(self, history: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        tool_ids: set[str] = set()
+        offset = 0
+        for i, msg in enumerate(history):
+            role = msg.get("role")
+            if role == "assistant":
+                for tool in msg.get("tool_calls") or []:
+                    if isinstance(tool, dict) and tc.get("id"):
+                        tool_ids.add(str[tool["id"]])
+            elif role == "tool":
+                tool_id = msg.get("tool_call_id")
+                if tool_id and str(tool_id) not in tool_ids:
+                    offset = i + 1
+        
+        return history if not offset else history[offset:]
+
+
 
     @staticmethod
     def _utc_now() -> str:
         return datetime.now(timezone.utc).isoformat()
+
+    @staticmethod
+    def _count_message_tokens(message: dict[str, Any]) -> int:
+        content = message.get("content", "")
+        return len(str(content).split())
 
 
     
