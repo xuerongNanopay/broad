@@ -1,4 +1,6 @@
-from agent.context.base import Context
+from datetime import datetime, timezone
+
+from agent.context.base import Context, InMemSessionContext
 
 
 class FakeSkillStore:
@@ -33,3 +35,48 @@ def test_context_build_system_prompt_handles_empty_defaults(tmp_path):
     context.skill_store = FakeSkillStore("")
 
     assert context.build_system_prompt() == ""
+
+
+def test_in_mem_session_context_extends_context_and_tracks_messages(tmp_path):
+    context = InMemSessionContext(
+        tmp_path,
+        system_prompt="Base instructions.",
+    )
+    context.skill_store = FakeSkillStore("")
+
+    assert isinstance(context, Context)
+    assert _parse_timestamp(context.created_at).tzinfo is timezone.utc
+    assert context.update_at == context.created_at
+
+    context.add_message("user", "Hello")
+    added = context.add_message("assistant", "Hi", name="assistant")
+
+    assert added["role"] == "assistant"
+    assert added["content"] == "Hi"
+    assert added["name"] == "assistant"
+    assert _parse_timestamp(added["timestamp"]).tzinfo is timezone.utc
+    assert context.update_at == added["timestamp"]
+    assert len(context.messages) == 2
+    assert context.messages[0]["role"] == "user"
+    assert context.messages[0]["content"] == "Hello"
+    assert _parse_timestamp(context.messages[0]["timestamp"]).tzinfo is timezone.utc
+
+
+def test_in_mem_session_context_starts_empty(tmp_path):
+    context = InMemSessionContext(tmp_path)
+
+    assert context.messages == []
+    assert _parse_timestamp(context.created_at).tzinfo is timezone.utc
+    assert context.update_at == context.created_at
+
+    context.add_message("user", "Hello")
+
+    assert len(context.messages) == 1
+    assert context.messages[0]["role"] == "user"
+    assert context.messages[0]["content"] == "Hello"
+    assert _parse_timestamp(context.messages[0]["timestamp"]).tzinfo is timezone.utc
+    assert context.update_at == context.messages[0]["timestamp"]
+
+
+def _parse_timestamp(value: str) -> datetime:
+    return datetime.fromisoformat(value)

@@ -1,7 +1,9 @@
 from pathlib import Path
+from datetime import datetime, timezone
+from typing import Any
+
 from utils.markdown import render_markdown
 from agent.skills import SkillsStore
-from typing import Any
 
 class Context:
     
@@ -59,6 +61,45 @@ class Context:
         
         return "\n\n".join(parts) if parts else ""
 
+
+class InMemSessionContext(Context):
+
+    def __init__(
+        self,
+        workspace_dir: Path,
+        skills: list[str] | None = None,
+        timezone: str | None = None,
+        *,
+        system_prompt: str | None = None,
+        builtin_system_prompt_mds: list[str] | None = None,
+        workspace_dir_system_prompt_mds: list[str] | None = None,
+    ):
+        super().__init__(
+            workspace_dir,
+            skills,
+            timezone,
+            system_prompt=system_prompt,
+            builtin_system_prompt_mds=builtin_system_prompt_mds,
+            workspace_dir_system_prompt_mds=workspace_dir_system_prompt_mds,
+        )
+        self.messages: list[dict[str, Any]] = []
+        self.created_at = self._utc_now()
+        self.update_at = self.created_at
+
+    def add_message(self, role: str, content: Any, **kwargs: Any) -> dict[str, Any]:
+        timestamp = self._utc_now()
+        message = {
+            "role": role, 
+            "content": content,
+            "timestamp": timestamp,
+            **kwargs,
+        }
+        self.update_at = timestamp
+        return message
+
+    @staticmethod
+    def _utc_now() -> str:
+        return datetime.now(timezone.utc).isoformat()
 
 
     
