@@ -1,29 +1,23 @@
 from pathlib import Path
 from utils.markdown import render_markdown
 from agent.skills import SkillsStore
+from typing import Any
 
 class Context:
     
-    def __init__(self, workspace_dir: Path, skills: list[str] | None, timezone: str | None = None):
-        self.workspace_dir = workspace_dir
-        self.skills = skills
-        self.timezone = timezone
-    
-
-class SimpleContext(Context):
-
     def __init__(
         self, 
         workspace_dir: Path, 
+        skills: list[str] | None = None, 
+        timezone: str | None = None,
         *,
         system_prompt: str | None = None,
         builtin_system_prompt_mds: list[str] | None = None,
-        workspace_dir_system_prompt_mds: list[str] | None = None,
-        skills: list[str] | None = None, 
-        timezone: str | None = None):
+        workspace_dir_system_prompt_mds: list[str] | None = None):
 
-        super().__init__(workspace_dir, skills, timezone)
-        
+        self.workspace_dir = workspace_dir
+        self.skills = skills
+        self.timezone = timezone
         self.system_prompt = system_prompt
         self.builtin_system_prompt_mds = builtin_system_prompt_mds or []
         self.workspace_dir_system_prompt_mds = workspace_dir_system_prompt_mds or []

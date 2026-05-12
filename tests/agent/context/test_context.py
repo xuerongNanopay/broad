@@ -1,4 +1,4 @@
-from agent.context.base import SimpleContext
+from agent.context.base import Context
 
 
 class FakeSkillStore:
@@ -9,10 +9,10 @@ class FakeSkillStore:
         return self.skills_summary
 
 
-def test_simple_context_build_system_prompt_combines_sources(tmp_path):
+def test_context_build_system_prompt_combines_sources(tmp_path):
     workspace_prompt = tmp_path / "WORKSPACE.md"
     workspace_prompt.write_text("# Workspace\n\nUse local instructions.", encoding="utf-8")
-    context = SimpleContext(
+    context = Context(
         tmp_path,
         system_prompt="Base instructions.",
         workspace_dir_system_prompt_mds=["WORKSPACE.md"],
@@ -28,8 +28,8 @@ def test_simple_context_build_system_prompt_combines_sources(tmp_path):
     assert "WORKSPACE.md" not in prompt
 
 
-def test_simple_context_build_system_prompt_handles_empty_defaults(tmp_path):
-    context = SimpleContext(tmp_path)
+def test_context_build_system_prompt_handles_empty_defaults(tmp_path):
+    context = Context(tmp_path)
     context.skill_store = FakeSkillStore("")
 
     assert context.build_system_prompt() == ""
