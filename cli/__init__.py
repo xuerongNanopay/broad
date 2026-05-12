@@ -11,6 +11,9 @@ app = typer.Typer(
 from bots import bots
 app.add_typer(bots, name="bots")
 
+from scripts import script_cli
+app.add_typer(script_cli, name="script")
+
 @app.command()
 def bots(name: str):
     print(f"bots")

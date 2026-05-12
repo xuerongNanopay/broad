@@ -20,6 +20,6 @@ from bots.coder_bot import coder_bot
 bots.add_typer(coder_bot, name="coder_bot")
 
 
-from broad.utils.path import develop_journal_home
+from utils.path import develop_journal_home
 
 ROBOT_JOURNAL_HOME = develop_journal_home() / "bots"
