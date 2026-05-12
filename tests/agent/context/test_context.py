@@ -119,7 +119,7 @@ def test_in_mem_session_context_get_history_limits_messages_and_tokens(tmp_path)
     context.add_message("assistant", "three")
     context.add_message("user", "four five")
 
-    history = context.get_history(max_messages=2, max_tokens=2)
+    history = context.get_history(max_messages=2, max_tokens=6)
 
     assert [message["content"] for message in history] == ["four five"]
 

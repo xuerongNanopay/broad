@@ -111,29 +111,22 @@ class InMemSessionContext(Context):
         history = history[-max_messages:]
         history = self._filter_begin_non_user_role(history)
         history = self._filter_until_a_paired_tool_turn(history)
-        
-
-        if max_messages <= 0:
-            return []
-        history = history[-max_messages:]
-
-        if max_tokens <= 0:
-            return []
-        
-        if max_tokens > 0 and history:
-            pass
 
         ret = []
-        total_tokens = 0
-        for message in reversed(history):
-            message_tokens = self._count_message_tokens(message)
-            if total_tokens + message_tokens > max_tokens:
-                break
+        if max_tokens > 0 and history:
+            total_tokens = 0
+            for message in reversed(history):
+                message_tokens = self._estimate_message_tokens(message)
+                if total_tokens + message_tokens > max_tokens and message.get("role") == "user":
+                    break
 
-            ret.append(message)
-            total_tokens += message_tokens
+                ret.append(message)
+                total_tokens += message_tokens
 
-        ret.reverse()
+            ret.reverse()
+        else:
+            ret = history
+
         return ret
     
     def _filter_begin_non_user_role(self, history: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -166,9 +159,9 @@ class InMemSessionContext(Context):
         return datetime.now(timezone.utc).isoformat()
 
     @staticmethod
-    def _count_message_tokens(message: dict[str, Any]) -> int:
+    def _estimate_message_tokens(message: dict[str, Any]) -> int:
         content = message.get("content", "")
-        return len(str(content).split())
+        return max(4, len(content) // 4 + 4)
 
 
     
