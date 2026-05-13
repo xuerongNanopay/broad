@@ -6,7 +6,7 @@ from llm.base import (
     ToolRequest,
     create_llm,
 )
-from llm.openai import OpenAILLM, create_openai_llm
+from llm.openai import OpenAILLM
 
 __all__ = [
     "FinishReason",
@@ -16,5 +16,4 @@ __all__ = [
     "OpenAILLM",
     "ToolRequest",
     "create_llm",
-    "create_openai_llm",
 ]

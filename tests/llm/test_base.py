@@ -36,14 +36,15 @@ class FakeOpenAIResponse:
         self.incomplete_details = incomplete_details
 
 
-def test_openai_llm_invokes_response():
+def test_openai_llm_invokes_response(monkeypatch):
     client = FakeOpenAIClient(
         FakeOpenAIResponse(
             output_text="pong",
             usage={"input_tokens": 3, "output_tokens": 4, "total_tokens": 7},
         )
     )
-    llm = OpenAILLM("gpt-test", client=client)
+    monkeypatch.setattr("openai.AsyncOpenAI", lambda **kwargs: client)
+    llm = OpenAILLM(default_model="gpt-test")
 
     response = _run(
         llm.invoke(
@@ -66,7 +67,7 @@ def test_openai_llm_invokes_response():
     }
 
 
-def test_openai_llm_accepts_agent_tools_on_invoke():
+def test_openai_llm_accepts_agent_tools_on_invoke(monkeypatch):
     def search(query: Annotated[str, "Search query."]) -> str:
         """Search indexed documents."""
         return query
@@ -84,7 +85,8 @@ def test_openai_llm_accepts_agent_tools_on_invoke():
             output=tool_calls,
         )
     )
-    llm = OpenAILLM("gpt-test", client=client)
+    monkeypatch.setattr("openai.AsyncOpenAI", lambda **kwargs: client)
+    llm = OpenAILLM(default_model="gpt-test")
 
     response = _run(
         llm.invoke(
@@ -120,7 +122,7 @@ def test_create_llm_rejects_unimplemented_provider():
         create_llm(LLMProvider.OLLAMA, "model")
 
 def test_openai_api():
-    llm = OpenAILLM("gpt-5.4-mini")
+    llm = OpenAILLM(default_model="gpt-5.4-mini")
     response = _run(llm.invoke(
         [
             {"role": "system", "content": "You are a concise assistant."},

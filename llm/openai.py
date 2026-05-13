@@ -10,23 +10,24 @@ from llm.base import FinishReason, LLM, LLMResponse, ToolRequest
 class OpenAILLM(LLM):
     def __init__(
         self,
-        model: str,
         *,
-        client: Any | None = None,
-        temperature: float = 0,
-        base_url: str | None = None,
+        api_key: str | None = None,
+        api_url: str | None = None,
+        default_model: str = "gpt-5-mini",
+        default_temperature: float = 0.7,
     ) -> None:
-        self._model = model
-        self._client = client or _create_openai_client(base_url=base_url)
-        self._temperature = temperature
+        self._default_model = default_model
+        self._default_temperature = default_temperature
 
-    @property
-    def model(self) -> str:
-        return self._model
+        from utils.env import load_env
+        from openai import AsyncOpenAI
+        load_env()
 
-    @property
-    def client(self) -> Any:
-        return self._client
+        self._client = AsyncOpenAI(
+            api_key = api_key or "no-key",
+            base_url = api_url or None,
+            max_retries = 0,
+        )
 
     async def invoke(
         self,
@@ -35,46 +36,22 @@ class OpenAILLM(LLM):
         tools: list[AgentTool] | None = None,
         model: str | None = None,
         max_tokens: int = 4096,
-        temperature: float = 0.7,
+        temperature: float  | None = None,
         reasoning: str | None = None,
     ) -> LLMResponse:
         kwargs: dict[str, Any] = {
-            "model": model or self.model,
+            "model": model or self._default_model,
             "input": messages,
             "max_output_tokens": max_tokens,
-            "temperature": temperature if temperature is not None else self._temperature,
+            "temperature": temperature or self._default_temperature,
         }
         if tools:
             kwargs["tools"] = [_to_openai_tool(tool) for tool in tools]
         if reasoning:
             kwargs["reasoning"] = {"effort": reasoning}
 
-        response = await self.client.responses.create(**kwargs)
+        response = await self._client.responses.create(**kwargs)
         return _to_llm_response(response)
-
-
-def create_openai_llm(
-    model: str,
-    *,
-    temperature: float = 0,
-    base_url: str | None = None,
-) -> LLM:
-    return OpenAILLM(
-        model,
-        temperature=temperature,
-        base_url=base_url,
-    )
-
-
-def _create_openai_client(*, base_url: str | None = None) -> Any:
-    from openai import AsyncOpenAI
-    from utils.env import load_env
-
-    load_env()
-    kwargs: dict[str, Any] = {}
-    if base_url is not None:
-        kwargs["base_url"] = base_url
-    return AsyncOpenAI(**kwargs)
 
 
 def _to_openai_tool(tool: AgentTool) -> dict[str, Any]:
@@ -205,5 +182,4 @@ def _field(value: Any, name: str, default: Any = None) -> Any:
 
 __all__ = [
     "OpenAILLM",
-    "create_openai_llm",
 ]

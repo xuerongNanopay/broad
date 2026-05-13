@@ -63,9 +63,9 @@ def create_llm(
 
     match provider:
         case LLMProvider.OPENAI:
-            from llm.openai import create_openai_llm
+            from llm.openai import OpenAILLM
 
-            return create_openai_llm(model, temperature=temperature, base_url=base_url)
+            return OpenAILLM(default_model=model, default_temperature=temperature, api_url=base_url)
         case LLMProvider.OLLAMA:
             raise NotImplementedError("OLLAMA LLM implementation is not available")
 
