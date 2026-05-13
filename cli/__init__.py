@@ -14,6 +14,9 @@ app.add_typer(bots, name="bots")
 from scripts import script_cli
 app.add_typer(script_cli, name="script")
 
+from demo import demo_cli
+app.add_typer(demo_cli, name="demo")
+
 @app.command()
 def bots(name: str):
     print(f"bots")
