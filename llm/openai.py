@@ -6,6 +6,8 @@ from typing import Any
 from agent.tools import AgentTool
 from llm.base import FinishReason, LLM, LLMResponse, ToolRequest
 
+from openai import AsyncOpenAI
+
 
 class OpenAILLM(LLM):
     def __init__(
@@ -19,12 +21,8 @@ class OpenAILLM(LLM):
         self._default_model = default_model
         self._default_temperature = default_temperature
 
-        from utils.env import load_env
-        from openai import AsyncOpenAI
-        load_env()
-
         self._client = AsyncOpenAI(
-            api_key = api_key or "no-key",
+            api_key = api_key,
             base_url = api_url or None,
             max_retries = 0,
         )
@@ -39,12 +37,16 @@ class OpenAILLM(LLM):
         temperature: float  | None = None,
         reasoning: str | None = None,
     ) -> LLMResponse:
+        model = model or self._default_model
         kwargs: dict[str, Any] = {
-            "model": model or self._default_model,
+            "model": model,
             "input": messages,
             "max_output_tokens": max_tokens,
-            "temperature": temperature or self._default_temperature,
         }
+
+        if _is_model_support_temperature(model, reasoning):
+            kwargs["temperature"] = temperature or self._default_temperature
+
         if tools:
             kwargs["tools"] = [_to_openai_tool(tool) for tool in tools]
         if reasoning:
@@ -53,6 +55,15 @@ class OpenAILLM(LLM):
         response = await self._client.responses.create(**kwargs)
         return _to_llm_response(response)
 
+
+def _is_model_support_temperature(
+    model_name: str,
+    reasoning_effort: str | None = None,
+) -> bool:
+    if reasoning_effort and reasoning_effort.lower() != "none":
+        return False
+    name = model_name.lower()
+    return not any(token in name for token in ("gpt-5", "o1", "o3", "o4"))
 
 def _to_openai_tool(tool: AgentTool) -> dict[str, Any]:
     scheme = tool.to_tool_scheme()
