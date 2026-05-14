@@ -16,7 +16,7 @@ DEFAULT_PROMPT = (
     "A cozy, realistic orange tabby cat sitting on a sunny windowsill, "
     "soft morning light, detailed fur, warm home interior."
 )
-DEFAULT_OUTPUT = Path("demo/cat.png")
+DEFAULT_OUTPUT = Path(".broad/demo/cat.png")
 
 
 async def main() -> None:
