@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-from pathlib import Path
 
 from openai import AsyncOpenAI
 from openai.types.responses import Response
@@ -40,23 +39,11 @@ async def main() -> None:
         description="Use OpenAI to debug a Java snippet or file.",
     )
     parser.add_argument(
-        "java_file",
-        nargs="?",
-        type=Path,
-        help="Optional path to a Java file. Uses a built-in buggy snippet if omitted.",
-    )
-    parser.add_argument(
         "--model",
         default=DEFAULT_MODEL,
         help=f"OpenAI model to use. Defaults to {DEFAULT_MODEL}.",
     )
     args = parser.parse_args()
-
-    java_code = (
-        args.java_file.read_text(encoding="utf-8")
-        if args.java_file
-        else DEFAULT_JAVA_CODE
-    )
 
     load_env()
     client = AsyncOpenAI()
@@ -73,7 +60,7 @@ async def main() -> None:
             },
             {
                 "role": "user",
-                "content": _debug_prompt(java_code),
+                "content": _debug_prompt(DEFAULT_JAVA_CODE),
             },
         ],
         max_output_tokens=1200,
