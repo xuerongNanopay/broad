@@ -24,6 +24,10 @@ async def main():
     payload = {
         "model": model,
         "input": [
+            {
+                "role": "developer",
+                "content": "Talk like a professor."
+            },
             {"role": "user", "content": prompt},
         ],
         "max_output_tokens": 256,
