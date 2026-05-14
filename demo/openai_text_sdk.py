@@ -10,7 +10,7 @@ from utils.env import load_env
 
 async def main():
     prompt = sys.argv[1] if len(sys.argv) > 1 else "Write a friendly hello-world sentence."
-    model = sys.argv[2] if len(sys.argv) > 2 else "gpt-5-mini"
+    model = sys.argv[2] if len(sys.argv) > 2 else "gpt-5.4-mini-2026-03-17"
 
     load_env()
     client = AsyncOpenAI()
