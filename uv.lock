@@ -60,6 +60,7 @@ dependencies = [
     { name = "ollama" },
     { name = "openai" },
     { name = "psycopg", extra = ["binary", "pool"] },
+    { name = "pydantic" },
     { name = "pypdf" },
     { name = "typer" },
 ]
@@ -81,6 +82,7 @@ requires-dist = [
     { name = "ollama", specifier = ">=0.6.1" },
     { name = "openai", specifier = ">=2.31.0" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.3.3" },
+    { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pypdf", specifier = ">=6.10.1" },
     { name = "typer", specifier = ">=0.24.1" },
 ]
