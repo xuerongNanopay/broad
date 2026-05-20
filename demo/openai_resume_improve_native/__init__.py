@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+from playwright.async_api import Error as PlaywrightError
+from playwright.async_api import async_playwright
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -18,7 +20,8 @@ OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
 OPENAI_FILES_URL = "https://api.openai.com/v1/files"
 DEFAULT_MODEL = "gpt-5.4-mini-2026-03-17"
 DEFAULT_RESUME = Path(__file__).with_name("resume_template.pdf")
-DEFAULT_OUTPUT = Path(".broad/demo/improved_resume.html")
+DEFAULT_HTML_OUTPUT = Path(".broad/demo/improved_resume.html")
+DEFAULT_PDF_OUTPUT = Path(".broad/demo/improved_resume.pdf")
 DEFAULT_TARGET_ROLE = "Senior Backend Engineer, fintech"
 
 SYSTEM_PROMPT = """
@@ -29,7 +32,7 @@ Update the resume for the target role while preserving truthfulness:
 - Do not invent companies, degrees, certifications, projects, or metrics.
 - You may rewrite vague bullets into stronger resume language when the source supports it.
 - Keep the resume concise, ATS-friendly, and readable as HTML.
-- Return a complete standalone HTML document with semantic tags and minimal inline CSS.
+- Return a complete standalone, print-ready HTML document with semantic tags and minimal inline CSS.
 - Return only HTML, with no Markdown fences or commentary before or after it.
 """.strip()
 
@@ -137,11 +140,13 @@ async def main() -> None:
     if improved_resume is None:
         raise RuntimeError("OpenAI did not return output_text.")
 
-    DEFAULT_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    DEFAULT_OUTPUT.write_text(improved_resume.rstrip() + "\n", encoding="utf-8")
+    DEFAULT_HTML_OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    DEFAULT_HTML_OUTPUT.write_text(improved_resume.rstrip() + "\n", encoding="utf-8")
+    await _html_to_pdf(DEFAULT_HTML_OUTPUT, DEFAULT_PDF_OUTPUT)
 
     print(improved_resume)
-    print(f"\nSaved improved resume to {DEFAULT_OUTPUT}")
+    print(f"\nSaved improved resume HTML to {DEFAULT_HTML_OUTPUT}")
+    print(f"Saved improved resume PDF to {DEFAULT_PDF_OUTPUT}")
 
 
 async def _upload_resume(client: httpx.AsyncClient, api_key: str, path: Path) -> str:
@@ -161,6 +166,33 @@ async def _upload_resume(client: httpx.AsyncClient, api_key: str, path: Path) ->
     if not isinstance(file_id, str):
         raise RuntimeError("OpenAI file upload did not return a file id.")
     return file_id
+
+
+async def _html_to_pdf(html_path: Path, pdf_path: Path) -> None:
+    pdf_path.parent.mkdir(parents=True, exist_ok=True)
+
+    async with async_playwright() as playwright:
+        try:
+            browser = await playwright.chromium.launch()
+        except PlaywrightError as exc:
+            raise RuntimeError(
+                "Playwright Chromium is not installed. Run `uv run playwright install chromium` "
+                "before converting HTML to PDF.",
+            ) from exc
+        page = await browser.new_page()
+        await page.goto(html_path.resolve().as_uri(), wait_until="networkidle")
+        await page.pdf(
+            path=str(pdf_path),
+            format="Letter",
+            print_background=True,
+            margin={
+                "top": "0.5in",
+                "right": "0.5in",
+                "bottom": "0.5in",
+                "left": "0.5in",
+            },
+        )
+        await browser.close()
 
 
 def _response_text(response: dict[str, Any]) -> str | None:
