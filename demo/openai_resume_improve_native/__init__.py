@@ -12,13 +12,13 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from utils.env import load_env
-from utils.pdf import read_pdf
 
 
 OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
+OPENAI_FILES_URL = "https://api.openai.com/v1/files"
 DEFAULT_MODEL = "gpt-5.4-mini-2026-03-17"
 DEFAULT_RESUME = Path(__file__).with_name("resume_template.pdf")
-DEFAULT_OUTPUT = Path(".broad/demo/improved_resume.md")
+DEFAULT_OUTPUT = Path(".broad/demo/improved_resume.html")
 DEFAULT_TARGET_ROLE = "Senior Backend Engineer, fintech"
 
 SYSTEM_PROMPT = """
@@ -28,8 +28,9 @@ Update the resume for the target role while preserving truthfulness:
 - Keep the candidate's original identity, dates, employers, education, and contact placeholders.
 - Do not invent companies, degrees, certifications, projects, or metrics.
 - You may rewrite vague bullets into stronger resume language when the source supports it.
-- Keep the resume concise, ATS-friendly, and readable as Markdown.
-- Return only the updated resume in Markdown, with no commentary before or after it.
+- Keep the resume concise, ATS-friendly, and readable as HTML.
+- Return a complete standalone HTML document with semantic tags and minimal inline CSS.
+- Return only HTML, with no Markdown fences or commentary before or after it.
 """.strip()
 
 JOB_DESCRIPTION = """
@@ -70,6 +71,16 @@ Competitive salary
 100% remote. Flexible PTO.
 """.strip()
 
+USER_PROMPT = f"""
+Target role: {DEFAULT_TARGET_ROLE}
+
+Job description:
+{JOB_DESCRIPTION}
+
+Update the attached resume PDF for this role and write the updated resume in HTML.
+""".strip()
+
+
 async def main() -> None:
     parser = argparse.ArgumentParser(
         description="Improve a resume PDF with the OpenAI Responses API.",
@@ -86,35 +97,38 @@ async def main() -> None:
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY is required.")
 
-    resume_text = _clean_pdf_text(read_pdf(str(DEFAULT_RESUME)))
-    if not resume_text:
-        raise RuntimeError(f"No text could be extracted from {DEFAULT_RESUME}.")
-
-    payload = {
-        "model": args.model,
-        "input": [
-            {
-                "role": "developer",
-                "content": SYSTEM_PROMPT,
-            },
-            {
-                "role": "user",
-                "content": _user_prompt(
-                    resume_text=resume_text,
-                ),
-            },
-        ],
-        "max_output_tokens": 4800,
-    }
-
     async with httpx.AsyncClient(timeout=120) as client:
+        file_id = await _upload_resume(client, api_key, DEFAULT_RESUME)
+
         response = await client.post(
             OPENAI_RESPONSES_URL,
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json",
             },
-            json=payload,
+            json={
+                "model": args.model,
+                "input": [
+                    {
+                        "role": "developer",
+                        "content": SYSTEM_PROMPT,
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "input_file",
+                                "file_id": file_id,
+                            },
+                            {
+                                "type": "input_text",
+                                "text": USER_PROMPT,
+                            },
+                        ],
+                    },
+                ],
+                "max_output_tokens": 4800,
+            },
         )
         response.raise_for_status()
 
@@ -130,24 +144,23 @@ async def main() -> None:
     print(f"\nSaved improved resume to {DEFAULT_OUTPUT}")
 
 
-def _user_prompt(*, resume_text: str) -> str:
-    return "\n\n".join(
-        [
-            f"Target role: {DEFAULT_TARGET_ROLE}",
-            "Job description:",
-            JOB_DESCRIPTION,
-            "Update this resume:",
-            resume_text,
-        ],
-    )
+async def _upload_resume(client: httpx.AsyncClient, api_key: str, path: Path) -> str:
+    if not path.exists():
+        raise FileNotFoundError(f"Resume PDF not found: {path}")
 
-
-def _clean_pdf_text(text: str) -> str:
-    return (
-        text.replace("\x7f", "-")
-        .replace("\u2022", "-")
-        .strip()
+    response = await client.post(
+        OPENAI_FILES_URL,
+        headers={"Authorization": f"Bearer {api_key}"},
+        data={"purpose": "user_data"},
+        files={"file": (path.name, path.read_bytes(), "application/pdf")},
     )
+    response.raise_for_status()
+
+    data = response.json()
+    file_id = data.get("id")
+    if not isinstance(file_id, str):
+        raise RuntimeError("OpenAI file upload did not return a file id.")
+    return file_id
 
 
 def _response_text(response: dict[str, Any]) -> str | None:
