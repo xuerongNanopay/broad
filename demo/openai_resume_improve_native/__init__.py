@@ -20,10 +20,10 @@ from utils.env import load_env
 OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
 OPENAI_FILES_URL = "https://api.openai.com/v1/files"
 DEFAULT_MODEL = "gpt-5.4-mini-2026-03-17"
-DEFAULT_RESUME = DEMO_DIR / "resume_template.pdf"
-DEFAULT_OUTPUT_DIR = ROOT / ".broad" / "demo" / "openai_resume_improve_native"
-DEFAULT_HTML_OUTPUT = DEFAULT_OUTPUT_DIR / "improved_resume.html"
-DEFAULT_PDF_OUTPUT = DEFAULT_OUTPUT_DIR / "improved_resume.pdf"
+APP_JOURNAL_HOME = ROOT / ".broad" / "demo" / "openai_resume_improve_native"
+DEFAULT_RESUME = APP_JOURNAL_HOME / "origin_resume.pdf"
+DEFAULT_HTML_OUTPUT = APP_JOURNAL_HOME / "improved_resume.html"
+DEFAULT_PDF_OUTPUT = APP_JOURNAL_HOME / "improved_resume.pdf"
 DEFAULT_TARGET_ROLE = "Senior Backend Engineer, fintech"
 
 SYSTEM_PROMPT = """
@@ -95,7 +95,14 @@ async def main() -> None:
         default=DEFAULT_MODEL,
         help=f"OpenAI model to use. Defaults to {DEFAULT_MODEL}.",
     )
+    parser.add_argument(
+        "--resume",
+        type=Path,
+        default=DEFAULT_RESUME,
+        help=f"Resume PDF to improve. Defaults to {DEFAULT_RESUME}.",
+    )
     args = parser.parse_args()
+    resume_path = args.resume.expanduser()
 
     load_env()
     api_key = os.getenv("OPENAI_API_KEY")
@@ -103,7 +110,7 @@ async def main() -> None:
         raise RuntimeError("OPENAI_API_KEY is required.")
 
     async with httpx.AsyncClient(timeout=120) as client:
-        file_id = await _upload_resume(client, api_key, DEFAULT_RESUME)
+        file_id = await _upload_resume(client, api_key, resume_path)
 
         response = await client.post(
             OPENAI_RESPONSES_URL,
