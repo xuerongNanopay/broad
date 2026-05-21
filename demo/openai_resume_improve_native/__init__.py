@@ -9,7 +9,8 @@ import httpx
 from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import async_playwright
 
-ROOT = Path(__file__).resolve().parents[2]
+DEMO_DIR = Path(__file__).resolve().parent
+ROOT = DEMO_DIR.parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -19,9 +20,10 @@ from utils.env import load_env
 OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
 OPENAI_FILES_URL = "https://api.openai.com/v1/files"
 DEFAULT_MODEL = "gpt-5.4-mini-2026-03-17"
-DEFAULT_RESUME = Path(__file__).with_name("resume_template.pdf")
-DEFAULT_HTML_OUTPUT = Path(".broad/demo/improved_resume.html")
-DEFAULT_PDF_OUTPUT = Path(".broad/demo/improved_resume.pdf")
+DEFAULT_RESUME = DEMO_DIR / "resume_template.pdf"
+DEFAULT_OUTPUT_DIR = ROOT / ".broad" / "demo" / "openai_resume_improve_native"
+DEFAULT_HTML_OUTPUT = DEFAULT_OUTPUT_DIR / "improved_resume.html"
+DEFAULT_PDF_OUTPUT = DEFAULT_OUTPUT_DIR / "improved_resume.pdf"
 DEFAULT_TARGET_ROLE = "Senior Backend Engineer, fintech"
 
 SYSTEM_PROMPT = """
