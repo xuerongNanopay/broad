@@ -2,10 +2,12 @@ import argparse
 import asyncio
 import os
 import sys
+from html import escape
 from pathlib import Path
 from typing import Any
 
 import httpx
+import pymupdf
 from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import async_playwright
 
@@ -18,10 +20,10 @@ from utils.env import load_env
 
 
 OPENAI_RESPONSES_URL = "https://api.openai.com/v1/responses"
-OPENAI_FILES_URL = "https://api.openai.com/v1/files"
 DEFAULT_MODEL = "gpt-5.4-mini-2026-03-17"
 APP_JOURNAL_HOME = ROOT / ".broad" / "demo" / "openai_resume_improve_native"
 DEFAULT_RESUME = APP_JOURNAL_HOME / "origin_resume.pdf"
+DEFAULT_RESUME_HTML = APP_JOURNAL_HOME / "origin_resume.html"
 DEFAULT_HTML_OUTPUT = APP_JOURNAL_HOME / "improved_resume.html"
 DEFAULT_PDF_OUTPUT = APP_JOURNAL_HOME / "improved_resume.pdf"
 DEFAULT_TARGET_ROLE = "Senior Backend Engineer, fintech"
@@ -30,6 +32,7 @@ SYSTEM_PROMPT = """
 You are a senior technical resume editor.
 
 Update the resume for the target role while preserving truthfulness:
+- Keep the same UI style.
 - Keep the candidate's original identity, dates, employers, education, and contact placeholders.
 - Do not invent companies, degrees, certifications, projects, or metrics.
 - You may rewrite vague bullets into stronger resume language when the source supports it.
@@ -82,7 +85,7 @@ Target role: {DEFAULT_TARGET_ROLE}
 Job description:
 {JOB_DESCRIPTION}
 
-Update the attached resume PDF for this role and write the updated resume in HTML.
+Update the source resume HTML for this role and write the updated resume in HTML.
 """.strip()
 
 
@@ -103,6 +106,7 @@ async def main() -> None:
     )
     args = parser.parse_args()
     resume_path = args.resume.expanduser()
+    source_resume_html = _pdf_to_html(resume_path, DEFAULT_RESUME_HTML)
 
     load_env()
     api_key = os.getenv("OPENAI_API_KEY")
@@ -110,8 +114,6 @@ async def main() -> None:
         raise RuntimeError("OPENAI_API_KEY is required.")
 
     async with httpx.AsyncClient(timeout=120) as client:
-        file_id = await _upload_resume(client, api_key, resume_path)
-
         response = await client.post(
             OPENAI_RESPONSES_URL,
             headers={
@@ -129,12 +131,8 @@ async def main() -> None:
                         "role": "user",
                         "content": [
                             {
-                                "type": "input_file",
-                                "file_id": file_id,
-                            },
-                            {
                                 "type": "input_text",
-                                "text": USER_PROMPT,
+                                "text": f"{USER_PROMPT}\n\nSource resume HTML:\n{source_resume_html}",
                             },
                         ],
                     },
@@ -154,27 +152,53 @@ async def main() -> None:
     await _html_to_pdf(DEFAULT_HTML_OUTPUT, DEFAULT_PDF_OUTPUT)
 
     print(improved_resume)
+    print(f"\nSaved source resume HTML to {DEFAULT_RESUME_HTML}")
     print(f"\nSaved improved resume HTML to {DEFAULT_HTML_OUTPUT}")
     print(f"Saved improved resume PDF to {DEFAULT_PDF_OUTPUT}")
 
 
-async def _upload_resume(client: httpx.AsyncClient, api_key: str, path: Path) -> str:
-    if not path.exists():
-        raise FileNotFoundError(f"Resume PDF not found: {path}")
+def _pdf_to_html(pdf_path: Path, html_path: Path) -> str:
+    if not pdf_path.exists():
+        raise FileNotFoundError(f"Resume PDF not found: {pdf_path}")
 
-    response = await client.post(
-        OPENAI_FILES_URL,
-        headers={"Authorization": f"Bearer {api_key}"},
-        data={"purpose": "user_data"},
-        files={"file": (path.name, path.read_bytes(), "application/pdf")},
-    )
-    response.raise_for_status()
+    html_path.parent.mkdir(parents=True, exist_ok=True)
+    with pymupdf.open(pdf_path) as doc:
+        pages = [
+            f'<section class="page" data-page="{page_number}">\n'
+            f'{page.get_text("html")}\n'
+            f"</section>"
+            for page_number, page in enumerate(doc, start=1)
+        ]
 
-    data = response.json()
-    file_id = data.get("id")
-    if not isinstance(file_id, str):
-        raise RuntimeError("OpenAI file upload did not return a file id.")
-    return file_id
+    html = f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{escape(pdf_path.stem)}</title>
+  <style>
+    body {{
+      background: #f6f6f6;
+      color: #111;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+    }}
+    .page {{
+      background: white;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+      margin: 0 auto 24px;
+      overflow: hidden;
+      position: relative;
+    }}
+  </style>
+</head>
+<body>
+{chr(10).join(pages)}
+</body>
+</html>
+"""
+    html_path.write_text(html, encoding="utf-8")
+    return html
 
 
 async def _html_to_pdf(html_path: Path, pdf_path: Path) -> None:
